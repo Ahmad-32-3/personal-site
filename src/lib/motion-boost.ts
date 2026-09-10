@@ -7,7 +7,6 @@ type Listener = () => void
 const listeners = new Set<Listener>()
 
 let boost = 1
-let raf = 0
 let started = false
 
 export function motionBoost() {
@@ -43,7 +42,7 @@ export function startMotionBoost() {
   const tick = (now: number) => {
     if (document.visibilityState !== "visible" || !canvasesMayRun()) {
       last = 0
-      raf = requestAnimationFrame(tick)
+      requestAnimationFrame(tick)
       return
     }
     if (last) {
@@ -66,13 +65,13 @@ export function startMotionBoost() {
       }
     }
     last = now
-    raf = requestAnimationFrame(tick)
+    requestAnimationFrame(tick)
   }
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") last = 0
   })
-  raf = requestAnimationFrame(tick)
+  requestAnimationFrame(tick)
 }
 
 export function useMotionBoost() {
