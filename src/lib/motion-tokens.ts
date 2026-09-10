@@ -1,3 +1,5 @@
+import { motionBoost } from "@/lib/motion-boost"
+
 export const motionTokens = {
   duration: {
     instant: 0.08,
@@ -25,4 +27,18 @@ export const springs = {
   snappy: { type: "spring" as const, stiffness: 300, damping: 30 },
   gentle: { type: "spring" as const, stiffness: 120, damping: 14 },
   instant: { type: "spring" as const, stiffness: 600, damping: 35 },
+}
+
+export function scaledDuration(seconds: number) {
+  return seconds / (typeof document !== "undefined" ? motionBoost() : 1)
+}
+
+export function scaledSpring(spring: (typeof springs)[keyof typeof springs]) {
+  const rate = typeof document !== "undefined" ? motionBoost() : 1
+  if (rate === 1) return spring
+  return {
+    ...spring,
+    stiffness: spring.stiffness * rate,
+    damping: spring.damping * Math.sqrt(rate),
+  }
 }

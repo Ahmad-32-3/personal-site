@@ -1,3 +1,6 @@
+import { canvasesMayRun, watchCanvasPause } from "@/lib/canvas-pause"
+import { motionBoost } from "@/lib/motion-boost"
+
 export function startAmbientStars(
   section: HTMLElement,
   canvas: HTMLCanvasElement
@@ -6,7 +9,7 @@ export function startAmbientStars(
   const context = canvas.getContext("2d")
   if (!context) return () => {}
   const g: CanvasRenderingContext2D = context
-  const D = Math.min(devicePixelRatio || 1, RM ? 1 : 2)
+  const D = Math.min(devicePixelRatio || 1, RM ? 1 : 1.5)
   let W = 0
   let H = 0
   let st: {
@@ -17,8 +20,9 @@ export function startAmbientStars(
     vy: number
     vx: number
   }[] = []
-  let run = false
+  let onScreen = false
   let raf = 0
+  let lastNow = 0
 
   function size() {
     W = canvas.width = Math.max(2, section.offsetWidth * D)
@@ -37,12 +41,12 @@ export function startAmbientStars(
     }))
   }
 
-  function draw(t: number) {
+  function draw(t: number, steps = 1) {
     g.clearRect(0, 0, W, H)
     g.globalCompositeOperation = "lighter"
     for (const s of st) {
-      s.x += s.vx
-      s.y += s.vy
+      s.x += s.vx * steps
+      s.y += s.vy * steps
       if (s.y < 0) s.y = H
       if (s.x < 0) s.x = W
       if (s.x > W) s.x = 0
@@ -55,34 +59,49 @@ export function startAmbientStars(
     g.globalCompositeOperation = "source-over"
   }
 
-  function loop(t: number) {
-    draw(t)
-    if (run && !RM) raf = requestAnimationFrame(loop)
+  function mayAnimate() {
+    return !RM && onScreen && canvasesMayRun()
+  }
+
+  function kick() {
+    cancelAnimationFrame(raf)
+    raf = 0
+    lastNow = 0
+    if (mayAnimate()) raf = requestAnimationFrame(loop)
+  }
+
+  function loop(now: number) {
+    const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 1 / 60
+    lastNow = now
+    const steps = Math.max(1, Math.min(6, Math.round(dt * 60 * motionBoost())))
+    draw(now, steps)
+    if (mayAnimate()) raf = requestAnimationFrame(loop)
   }
 
   size()
   draw(0)
   const onResize = () => {
     size()
-    if (!run || RM) draw(0)
+    if (!mayAnimate() || RM) draw(0)
   }
   addEventListener("resize", onResize)
 
   const io = new IntersectionObserver(
     (es) => {
       es.forEach((e) => {
-        run = e.isIntersecting
-        cancelAnimationFrame(raf)
-        if (run && !RM) raf = requestAnimationFrame(loop)
+        onScreen = e.isIntersecting
+        kick()
       })
     },
     { threshold: 0 }
   )
   io.observe(section)
+  const unwatchPause = watchCanvasPause(kick)
 
   return () => {
-    run = false
+    onScreen = false
     cancelAnimationFrame(raf)
+    unwatchPause()
     io.disconnect()
     removeEventListener("resize", onResize)
   }

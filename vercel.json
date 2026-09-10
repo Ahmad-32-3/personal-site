@@ -1,0 +1,8 @@
+{
+  "headers": [
+    {
+      "source": "/work/inboxsweep/redirect.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
+  ]
+}

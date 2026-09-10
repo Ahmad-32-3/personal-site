@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react"
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react"
 
 import { ContactSection } from "@/components/ContactSection"
-import { FeaturedFlipCard } from "@/components/FeaturedFlipCard"
 import { ProjectCard } from "@/components/ProjectCard"
 import { SiteNav } from "@/components/SiteNav"
-import { PROJECT_TIERS, type Project } from "@/data/projects"
+import {
+  PROJECT_TIERS,
+  projectByWalkSlug,
+  walkSlug,
+  type Project,
+} from "@/data/projects"
 import { TONES } from "@/data/tones"
 import { startAmbientStars } from "@/lib/ambient-stars"
+import { setWalkOverlayOpen } from "@/lib/canvas-pause"
 import { startParticleHero } from "@/lib/particle-hero"
 import { polishWalk } from "@/lib/walk-polish"
 import "@/site.css"
@@ -63,6 +68,18 @@ function observeOnce(
   return () => io.disconnect()
 }
 
+function projectFromWalkQuery(): Project | null {
+  const slug = new URLSearchParams(window.location.search).get("walk")
+  return slug ? projectByWalkSlug(slug) ?? null : null
+}
+
+function hrefWithWalk(slug: string | null): string {
+  const url = new URL(window.location.href)
+  if (slug) url.searchParams.set("walk", slug)
+  else url.searchParams.delete("walk")
+  return `${url.pathname}${url.search}${url.hash}`
+}
+
 export function App() {
   const heroRef = useRef<HTMLElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -74,7 +91,50 @@ export function App() {
   const timelineRef = useRef<HTMLDivElement>(null)
   const projRef = useRef<HTMLElement>(null)
   const projStarsRef = useRef<HTMLCanvasElement>(null)
-  const [open, setOpen] = useState<Project | null>(null)
+  const backRef = useRef<HTMLButtonElement>(null)
+  const lastTriggerRef = useRef<HTMLElement | null>(null)
+  const [open, setOpen] = useState<Project | null>(projectFromWalkQuery)
+
+  const openWalk = useCallback((project: Project) => {
+    const active = document.activeElement
+    if (active instanceof HTMLElement) lastTriggerRef.current = active
+    setOpen(project)
+    const slug = walkSlug(project)
+    if (!slug) return
+    const current = new URLSearchParams(window.location.search).get("walk")
+    if (current === slug) return
+    history.pushState({ walk: slug }, "", hrefWithWalk(slug))
+  }, [])
+
+  const closeWalk = useCallback(() => {
+    setOpen(null)
+    if (!new URLSearchParams(window.location.search).has("walk")) return
+    history.replaceState({ walk: null }, "", hrefWithWalk(null))
+  }, [])
+
+  useEffect(() => {
+    if (open) {
+      backRef.current?.focus()
+      return
+    }
+    lastTriggerRef.current?.focus()
+    lastTriggerRef.current = null
+  }, [open])
+
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("walk")
+    if (slug && !projectByWalkSlug(slug)) {
+      history.replaceState({ walk: null }, "", hrefWithWalk(null))
+    }
+    const onPop = () => setOpen(projectFromWalkQuery())
+    window.addEventListener("popstate", onPop)
+    return () => window.removeEventListener("popstate", onPop)
+  }, [])
+
+  useEffect(() => {
+    setWalkOverlayOpen(!!open)
+    return () => setWalkOverlayOpen(false)
+  }, [open])
 
   useEffect(() => {
     if (!canvasRef.current || !heroRef.current) return
@@ -102,7 +162,7 @@ export function App() {
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(null)
+      if (e.key === "Escape") closeWalk()
     }
     window.addEventListener("keydown", onKey)
     const prev = document.body.style.overflow
@@ -111,7 +171,7 @@ export function App() {
       window.removeEventListener("keydown", onKey)
       document.body.style.overflow = prev
     }
-  }, [open])
+  }, [open, closeWalk])
 
   return (
     <div className="site" id="top">
@@ -214,23 +274,14 @@ export function App() {
                 <span className="c">{tier.items.length}</span>
               </div>
               <div className={tier.id === "featured" ? "grid feat" : "grid"}>
-                {tier.items.map((p, i) =>
-                  tier.id === "featured" ? (
-                    <FeaturedFlipCard
-                      key={p.t}
-                      project={p}
-                      index={i}
-                      onOpen={setOpen}
-                    />
-                  ) : (
-                    <ProjectCard
-                      key={p.t}
-                      project={p}
-                      mini={tier.id === "more"}
-                      onOpen={setOpen}
-                    />
-                  )
-                )}
+                {tier.items.map((p) => (
+                  <ProjectCard
+                    key={p.t}
+                    project={p}
+                    mini={tier.id === "more"}
+                    onOpen={openWalk}
+                  />
+                ))}
               </div>
             </div>
           ))}
@@ -252,10 +303,16 @@ export function App() {
             : undefined
         }
         role="dialog"
-        aria-modal={!!open}
+        aria-label={open ? open.t : undefined}
+        aria-modal={open ? true : undefined}
         aria-hidden={!open}
       >
-        <button type="button" className="back" onClick={() => setOpen(null)}>
+        <button
+          ref={backRef}
+          type="button"
+          className="back"
+          onClick={closeWalk}
+        >
           Back to projects
         </button>
         {open?.walk ? (

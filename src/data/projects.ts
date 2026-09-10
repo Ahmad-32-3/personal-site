@@ -359,3 +359,22 @@ export const PROJECT_TIERS: ProjectTier[] = [
     ],
   },
 ]
+
+export function walkSlug(project: Project): string | null {
+  if (!project.walk) return null
+  const parts = project.walk.split("/").filter(Boolean)
+  const work = parts.indexOf("work")
+  const slug = work >= 0 ? parts[work + 1] : parts.at(-1)
+  return slug || null
+}
+
+export function projectByWalkSlug(slug: string): Project | undefined {
+  const needle = slug.trim().toLowerCase()
+  if (!needle) return undefined
+  for (const tier of PROJECT_TIERS) {
+    const found = tier.items.find(
+      (item) => walkSlug(item)?.toLowerCase() === needle
+    )
+    if (found) return found
+  }
+}

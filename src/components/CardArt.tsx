@@ -1,7 +1,8 @@
 import { motion, useReducedMotion } from "motion/react"
 import type { ReactNode } from "react"
 
-import { motionTokens } from "@/lib/motion-tokens"
+import { useMotionBoost } from "@/lib/motion-boost"
+import { motionTokens, scaledDuration } from "@/lib/motion-tokens"
 
 type CardArtProps = {
   kind: string
@@ -30,6 +31,7 @@ function Stroke({
   delay?: number
 }) {
   const reduce = useReducedMotion()
+  useMotionBoost()
   return (
     <motion.path
       d={d}
@@ -39,9 +41,9 @@ function Stroke({
       whileInView={{ pathLength: 1 }}
       viewport={{ once: true, amount: 0.35 }}
       transition={{
-        duration: motionTokens.duration.slow,
+        duration: scaledDuration(motionTokens.duration.slow),
         ease: motionTokens.easing.smooth,
-        delay: reduce ? 0 : delay,
+        delay: reduce ? 0 : scaledDuration(delay),
       }}
     />
   )
@@ -55,15 +57,16 @@ function Fade({
   delay?: number
 }) {
   const reduce = useReducedMotion()
+  useMotionBoost()
   return (
     <motion.g
       initial={{ opacity: reduce ? 1 : 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0.35 }}
       transition={{
-        duration: motionTokens.duration.normal,
+        duration: scaledDuration(motionTokens.duration.normal),
         ease: motionTokens.easing.smooth,
-        delay: reduce ? 0 : delay,
+        delay: reduce ? 0 : scaledDuration(delay),
       }}
     >
       {children}

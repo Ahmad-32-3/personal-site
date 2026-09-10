@@ -1,3 +1,6 @@
+import { canvasesMayRun, watchCanvasPause } from "@/lib/canvas-pause"
+import { motionBoost } from "@/lib/motion-boost"
+
 type Core = {
   tx: number
   ty: number
@@ -19,13 +22,21 @@ const SEQ = [
   ["MUHAMMAD", "AHMAD"],
 ]
 
+const PARTICLE_FILL = Array.from(
+  { length: 61 },
+  (_, i) => `rgba(${175 + i},205,255,0.9)`
+)
+
 export function startParticleHero(
   canvas: HTMLCanvasElement,
   hero: HTMLElement
 ): () => void {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches
-  const DPR = Math.min(devicePixelRatio || 1, RM ? 1 : 2)
-  const context = canvas.getContext("2d")
+  const DPR = Math.min(devicePixelRatio || 1, RM ? 1 : 1.5)
+  const context = canvas.getContext("2d", {
+    alpha: false,
+    desynchronized: true,
+  })
   if (!context) return () => {}
   const ctx: CanvasRenderingContext2D = context
 
@@ -38,20 +49,14 @@ export function startParticleHero(
   let core: Core[] = []
   let idx = 0
   let timer = 0
+  let lastNow = 0
   let stars: { x: number; y: number; r: number; tw: number }[] = []
   let orbit: { a: number; r: number; ry: number; sp: number; sz: number }[] = []
-  let bok: {
-    x: number
-    y: number
-    r: number
-    ph: number
-    sp: number
-    ox: number
-    oy: number
-  }[] = []
-  let running = true
+  let onScreen = true
   let raf = 0
   let cancelled = false
+  const back: number[][] = []
+  const front: number[][] = []
 
   function sample(lines: string[]) {
     const o = document.createElement("canvas")
@@ -128,27 +133,14 @@ export function startParticleHero(
       r: (Math.random() * 1.1 + 0.3) * DPR,
       tw: Math.random() * 6,
     }))
-    const RO = Math.min(W, H) * 0.36
+    const RO = Math.min(W, H) * 0.4
     orbit = Array.from({ length: RM ? 26 : 70 }, () => ({
       a: Math.random() * 6.28,
       r: RO * (0.78 + Math.random() * 0.55),
-      ry: 0.34,
+      ry: 0.36,
       sp: 0.0015 + Math.random() * 0.0011,
       sz: (Math.random() * 1.6 + 0.6) * DPR,
     }))
-    bok = Array.from({ length: RM ? 6 : 15 }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      r: (40 + Math.random() * 90) * DPR,
-      ph: Math.random() * 6,
-      sp: 0.15 + Math.random() * 0.25,
-      ox: 0,
-      oy: 0,
-    }))
-    bok.forEach((b) => {
-      b.ox = b.x
-      b.oy = b.y
-    })
   }
 
   function dot(px: number, py: number, r: number, col: string) {
@@ -158,42 +150,17 @@ export function startParticleHero(
     ctx.fill()
   }
 
-  function frame(now: number) {
-    const t = now / 1000
+  function stepPhysics(t: number) {
     p.x += (p.tx - p.x) * 0.05
     p.y += (p.ty - p.y) * 0.05
-    if (!RM && now - timer > 3400) {
-      idx = (idx + 1) % sets.length
-      assign()
-      timer = now
-    }
-    ctx.fillStyle = "#06070a"
-    ctx.fillRect(0, 0, W, H)
-    ctx.globalCompositeOperation = "lighter"
-    const bx = p.x * 20 * DPR
-    const by = p.y * 16 * DPR
-    for (const s of stars) {
-      const a = 0.3 + 0.4 * Math.abs(Math.sin(t * 0.6 + s.tw))
-      dot(s.x + bx, s.y + by, s.r, `rgba(150,175,220,${a})`)
-    }
-    const ox = p.x * 60 * DPR
-    const oy = p.y * 46 * DPR
-    const back: number[][] = []
-    const front: number[][] = []
-    for (const o of orbit) {
-      o.a += RM ? 0 : o.sp
-      const z = Math.sin(o.a)
-      const px = cx + Math.cos(o.a) * o.r + ox
-      const py = cy + Math.sin(o.a) * o.r * o.ry + oy
-      const sc = 0.6 + 0.4 * (z * 0.5 + 0.5)
-      ;(z < 0 ? back : front).push([px, py, o.sz * sc])
-    }
-    for (const [px, py, r] of back) dot(px, py, r, "rgba(120,160,220,0.5)")
     const nx = p.x * 30 * DPR
     const ny = p.y * 24 * DPR
-    const R = 120 * DPR
+    const R = 72 * DPR
     const R2 = R * R
     const amp = RM ? 0 : 1.6 * DPR
+    if (!RM) {
+      for (const o of orbit) o.a += o.sp
+    }
     for (const q of core) {
       const hx = q.tx + Math.sin(t * q.sp + q.ph) * amp + nx
       const hy = q.ty + Math.cos(t * q.sp * 0.9 + q.ph) * amp + ny
@@ -205,7 +172,7 @@ export function startParticleHero(
         const d2 = dx * dx + dy * dy
         if (d2 < R2) {
           const d = Math.sqrt(d2) || 1
-          const f = ((R - d) / R) * 6
+          const f = ((R - d) / R) * 3.2
           ax += (dx / d) * f
           ay += (dy / d) * f
         }
@@ -214,26 +181,62 @@ export function startParticleHero(
       q.vy = (q.vy + ay) * 0.85
       q.x += q.vx
       q.y += q.vy
-      const r = (175 + q.c * 60) | 0
-      ctx.fillStyle = `rgba(${r},205,255,0.9)`
-      ctx.fillRect(q.x, q.y, 1.7 * DPR, 1.7 * DPR)
+    }
+  }
+
+  function frame(now: number) {
+    const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 1 / 60
+    lastNow = now
+    const rate = motionBoost()
+    const steps = Math.max(1, Math.min(6, Math.round(dt * 60 * rate)))
+    const t = now / 1000
+    if (!RM && now - timer > 3400 / rate) {
+      idx = (idx + 1) % sets.length
+      assign()
+      timer = now
+    }
+    for (let i = 0; i < steps; i++) stepPhysics(t)
+
+    ctx.fillStyle = "#06070a"
+    ctx.fillRect(0, 0, W, H)
+    ctx.globalCompositeOperation = "lighter"
+    const bx = p.x * 20 * DPR
+    const by = p.y * 16 * DPR
+    for (const s of stars) {
+      const a = 0.3 + 0.4 * Math.abs(Math.sin(t * 0.6 + s.tw))
+      dot(s.x + bx, s.y + by, s.r, `rgba(150,175,220,${a})`)
+    }
+    const ox = p.x * 60 * DPR
+    const oy = p.y * 46 * DPR
+    back.length = 0
+    front.length = 0
+    for (const o of orbit) {
+      const z = Math.sin(o.a)
+      const px = cx + Math.cos(o.a) * o.r + ox
+      const py = cy + Math.sin(o.a) * o.r * o.ry + oy
+      const sc = 0.6 + 0.4 * (z * 0.5 + 0.5)
+      ;(z < 0 ? back : front).push([px, py, o.sz * sc])
+    }
+    for (const [px, py, r] of back) dot(px, py, r, "rgba(120,160,220,0.5)")
+    const sz = 1.7 * DPR
+    for (const q of core) {
+      ctx.fillStyle = PARTICLE_FILL[Math.max(0, Math.min(60, (q.c * 60) | 0))]
+      ctx.fillRect(q.x, q.y, sz, sz)
     }
     for (const [px, py, r] of front) dot(px, py, r, "rgba(180,210,255,0.75)")
-    const fx = -p.x * 90 * DPR
-    const fy = -p.y * 70 * DPR
-    for (const b of bok) {
-      const px = b.ox + Math.sin(t * b.sp + b.ph) * 40 * DPR + fx
-      const py = b.oy + Math.cos(t * b.sp * 0.8 + b.ph) * 30 * DPR + fy
-      const g = ctx.createRadialGradient(px, py, 0, px, py, b.r)
-      g.addColorStop(0, "rgba(140,175,255,0.10)")
-      g.addColorStop(1, "transparent")
-      ctx.fillStyle = g
-      ctx.beginPath()
-      ctx.arc(px, py, b.r, 0, 7)
-      ctx.fill()
-    }
     ctx.globalCompositeOperation = "source-over"
-    if (!RM && running) raf = requestAnimationFrame(frame)
+    if (mayAnimate()) raf = requestAnimationFrame(frame)
+  }
+
+  function mayAnimate() {
+    return !RM && onScreen && canvasesMayRun()
+  }
+
+  function kick() {
+    cancelAnimationFrame(raf)
+    raf = 0
+    lastNow = 0
+    if (mayAnimate()) raf = requestAnimationFrame(frame)
   }
 
   const onMove = (e: PointerEvent) => {
@@ -261,9 +264,11 @@ export function startParticleHero(
       })
       frame(0)
     } else {
-      raf = requestAnimationFrame(frame)
+      kick()
     }
   }
+
+  const unwatchPause = watchCanvasPause(kick)
 
   if (document.fonts?.ready) {
     void document.fonts.ready.then(() => {
@@ -276,21 +281,22 @@ export function startParticleHero(
   const io = new IntersectionObserver(
     (es) => {
       es.forEach((e) => {
-        running = e.isIntersecting
-        if (running && !RM) {
-          timer = performance.now()
-          raf = requestAnimationFrame(frame)
-        }
+        onScreen = e.intersectionRatio >= 0.2
+        if (onScreen) timer = performance.now()
+        kick()
       })
     },
-    { threshold: 0 }
+    {
+      threshold: [0, 0.2],
+    }
   )
   io.observe(hero)
 
   return () => {
     cancelled = true
-    running = false
+    onScreen = false
     cancelAnimationFrame(raf)
+    unwatchPause()
     io.disconnect()
     removeEventListener("pointermove", onMove)
     removeEventListener("pointerleave", onLeave)

@@ -11,7 +11,8 @@ import {
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react"
 
 import { startAmbientStars } from "@/lib/ambient-stars"
-import { motionTokens, springs } from "@/lib/motion-tokens"
+import { useMotionBoost } from "@/lib/motion-boost"
+import { motionTokens, scaledDuration, scaledSpring, springs } from "@/lib/motion-tokens"
 
 const EMAIL = "m48ahmad@uwaterloo.ca"
 const GITHUB = "https://github.com/Ahmad-32-3"
@@ -49,8 +50,9 @@ function Magnetic({ children }: { children: ReactNode }) {
 
 function DrawIcon({ kind }: { kind: "mail" | "git" }) {
   const reduce = useReducedMotion()
+  useMotionBoost()
   const draw = {
-    duration: motionTokens.duration.slow,
+    duration: scaledDuration(motionTokens.duration.slow),
     ease: motionTokens.easing.smooth,
   }
 
@@ -81,7 +83,7 @@ function DrawIcon({ kind }: { kind: "mail" | "git" }) {
             initial={{ pathLength: reduce ? 1 : 0 }}
             whileInView={{ pathLength: 1 }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ ...draw, delay: reduce ? 0 : 0.12 }}
+            transition={{ ...draw, delay: reduce ? 0 : scaledDuration(0.12) }}
           />
         </>
       ) : (
@@ -102,7 +104,7 @@ function DrawIcon({ kind }: { kind: "mail" | "git" }) {
             initial={{ pathLength: reduce ? 1 : 0 }}
             whileInView={{ pathLength: 1 }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ ...draw, delay: reduce ? 0 : 0.08 }}
+            transition={{ ...draw, delay: reduce ? 0 : scaledDuration(0.08) }}
           />
           <motion.circle
             cx="18"
@@ -111,14 +113,14 @@ function DrawIcon({ kind }: { kind: "mail" | "git" }) {
             initial={{ pathLength: reduce ? 1 : 0 }}
             whileInView={{ pathLength: 1 }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ ...draw, delay: reduce ? 0 : 0.16 }}
+            transition={{ ...draw, delay: reduce ? 0 : scaledDuration(0.16) }}
           />
           <motion.path
             d="M8 7.2v8.6M8 16.4h7.2M16 13.8V9"
             initial={{ pathLength: reduce ? 1 : 0 }}
             whileInView={{ pathLength: 1 }}
             viewport={{ once: true, amount: 0.6 }}
-            transition={{ ...draw, delay: reduce ? 0 : 0.2 }}
+            transition={{ ...draw, delay: reduce ? 0 : scaledDuration(0.2) }}
           />
         </>
       )}
@@ -128,6 +130,7 @@ function DrawIcon({ kind }: { kind: "mail" | "git" }) {
 
 export function ContactSection() {
   const reduce = useReducedMotion()
+  useMotionBoost()
   const sectionRef = useRef<HTMLElement>(null)
   const starsRef = useRef<HTMLCanvasElement>(null)
   const [copied, setCopied] = useState(false)
@@ -145,7 +148,7 @@ export function ContactSection() {
     window.clearTimeout(copiedTimer.current)
     copiedTimer.current = window.setTimeout(
       () => setCopied(false),
-      motionTokens.duration.crawl * 2000
+      scaledDuration(motionTokens.duration.crawl) * 2000
     )
     try {
       await navigator.clipboard.writeText(EMAIL)
@@ -168,7 +171,7 @@ export function ContactSection() {
         initial: { opacity: 0, y: motionTokens.distance.md },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true, amount: 0.35 },
-        transition: springs.gentle,
+        transition: scaledSpring(springs.gentle),
       }
 
   return (
@@ -203,7 +206,7 @@ export function ContactSection() {
                         opacity: 0,
                         y: reduce ? 0 : -motionTokens.distance.sm,
                       }}
-                      transition={{ duration: motionTokens.duration.fast }}
+                      transition={{ duration: scaledDuration(motionTokens.duration.fast) }}
                     >
                       {copied ? (
                         <Check size={14} strokeWidth={2} aria-hidden="true" />
@@ -226,7 +229,10 @@ export function ContactSection() {
             {...(reveal
               ? {
                   ...reveal,
-                  transition: { ...springs.gentle, delay: 0.08 },
+                  transition: {
+                    ...scaledSpring(springs.gentle),
+                    delay: scaledDuration(0.08),
+                  },
                 }
               : undefined)}
           >

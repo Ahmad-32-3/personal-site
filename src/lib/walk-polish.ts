@@ -144,6 +144,7 @@ html[data-slug="copypath"] #problem ${empty}::before { background-image: ${DIAG.
 html[data-slug="wattahead"] #stack ${empty}::before { background-image: ${DIAG.stack}; }
 html[data-slug="bursttape"] #decisions ${empty}::before { background-image: ${DIAG.next}; }
 html[data-slug="livehedge"] #decisions ${empty}::before { background-image: ${DIAG.decisions}; }
+html[data-slug="greporembed"] .hero-pause { display: none !important; }
 `
 
 function slugFromSrc(src: string) {

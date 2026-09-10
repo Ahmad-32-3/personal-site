@@ -8,6 +8,9 @@ type ProjectCardProps = {
 }
 
 export function ProjectCard({ project, mini, onOpen }: ProjectCardProps) {
+  const body = project.claim ?? project.d
+  const method = project.method
+
   return (
     <div
       className={`card${project.feat ? " keycard" : ""}${mini ? " mini" : ""}`}
@@ -22,7 +25,8 @@ export function ProjectCard({ project, mini, onOpen }: ProjectCardProps) {
         </div>
         <p className="t">{project.t}</p>
         <p className="tag">{project.tag || ""}</p>
-        {project.d ? <p className="d">{project.d}</p> : null}
+        {body ? <p className="d">{body}</p> : null}
+        {method && method !== body ? <p className="d method">{method}</p> : null}
       </button>
       {project.github ? (
         <a
