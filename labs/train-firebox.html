@@ -1,0 +1,251 @@
+<title>The Firebox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Oswald:wght@300;400;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+  :root{
+    --iron:#14100d;--iron-2:#1f1813;--iron-lo:#0a0806;
+    --brass:#b98a49;--brass-hi:#f2d38a;--brass-lo:#5e421f;--brass-mid:#caa05a;
+    --fire:#ff7a1a;--cream:#e9dcc2;--soot:#8a7d6b;
+    --disp:"Cinzel",Georgia,serif;--cond:"Oswald",system-ui,sans-serif;--mono:"JetBrains Mono",monospace;
+  }
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{height:100svh;overflow:hidden;background:var(--iron-lo);color:var(--cream);font-family:var(--cond);-webkit-font-smoothing:antialiased}
+  /* iron room */
+  #room{position:fixed;inset:0;
+    background:
+      radial-gradient(120% 90% at 50% 108%, rgba(255,120,30,.28), transparent 46%),
+      radial-gradient(140% 120% at 50% 118%, rgba(255,60,10,.22), transparent 40%),
+      linear-gradient(180deg,#0a0806 0%,#171009 60%,#1d130b 100%);
+  }
+  #plates{position:fixed;inset:0;opacity:.5;pointer-events:none;
+    background-image:linear-gradient(90deg,rgba(0,0,0,.5) 1px,transparent 1px),linear-gradient(0deg,rgba(0,0,0,.35) 1px,transparent 1px);
+    background-size:120px 120px;
+    -webkit-mask-image:radial-gradient(120% 100% at 50% 60%,#000,transparent 85%);mask-image:radial-gradient(120% 100% at 50% 60%,#000,transparent 85%)}
+  #fire-lay{position:fixed;inset:0;z-index:5;pointer-events:none}   /* embers + steam */
+  #vig{position:fixed;inset:0;z-index:8;pointer-events:none;
+    box-shadow:inset 0 0 200px 60px rgba(0,0,0,.85),inset 0 0 60px 10px rgba(0,0,0,.6);
+    background:radial-gradient(130% 100% at 50% 50%,transparent 55%,rgba(0,0,0,.6))}
+  #flick{position:fixed;inset:0;z-index:7;pointer-events:none;mix-blend-mode:soft-light;
+    background:radial-gradient(90% 70% at 50% 100%,rgba(255,150,50,.6),transparent 60%)}
+
+  /* firebox door assembly */
+  #firebox{position:fixed;left:50%;bottom:-4vh;transform:translateX(-50%);z-index:4;
+    width:clamp(280px,34vw,420px);
+    padding:26px 26px 0;border-radius:60% 60% 10px 10px/44% 44% 10px 10px;
+    background:linear-gradient(160deg,#2a211a,#140e09 60%);
+    box-shadow:0 -2px 0 rgba(255,190,120,.12) inset, 0 0 0 3px #0b0806, 0 0 0 6px #241a12, 0 30px 80px rgba(0,0,0,.7);}
+  #opening{position:relative;height:clamp(300px,42vh,460px);overflow:hidden;
+    border-radius:58% 58% 8px 8px/50% 50% 8px 8px;
+    box-shadow:inset 0 0 0 4px #0a0705, inset 0 0 40px 20px rgba(0,0,0,.55);
+    background:#160a04}
+  #fire{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #grate{position:absolute;left:8%;right:8%;bottom:0;height:26px;z-index:2;
+    background:repeating-linear-gradient(90deg,#0b0705 0 6px,transparent 6px 20px);opacity:.85}
+  /* rivets around the arch */
+  .rivet{position:absolute;width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#e7c98d,#5c4020 70%);box-shadow:0 1px 1px rgba(0,0,0,.6)}
+  /* open door leaf */
+  #door{position:fixed;bottom:2vh;left:calc(50% - clamp(280px,34vw,420px)/2 - clamp(70px,9vw,120px));z-index:3;
+    width:clamp(120px,15vw,190px);height:clamp(230px,34vh,360px);transform:perspective(700px) rotateY(38deg);transform-origin:right center;
+    border-radius:14px 8px 8px 14px;
+    background:linear-gradient(100deg,#241a12,#120c07);
+    box-shadow:0 0 0 3px #0b0806,inset 0 0 30px rgba(0,0,0,.6),0 20px 50px rgba(0,0,0,.6)}
+  #door .handle{position:absolute;left:12px;top:50%;width:14px;height:64px;transform:translateY(-50%);border-radius:8px;
+    background:linear-gradient(90deg,#e7c98d,#7a5626);box-shadow:0 0 6px rgba(0,0,0,.6)}
+  #door::after{content:"";position:absolute;inset:14px;border-radius:8px;box-shadow:inset 0 0 0 2px rgba(255,200,130,.08)}
+
+  /* brass builder's plate */
+  #plate{position:fixed;left:50%;top:12vh;transform:translateX(-50%);z-index:6;text-align:center;
+    padding:26px 54px;border-radius:16px;
+    background:
+      linear-gradient(160deg,#e7c489 0%,#b3833f 22%,#8a5f2a 50%,#c39a55 74%,#7a5324 100%);
+    box-shadow:0 0 0 4px #3c2a12, 0 0 0 8px #6d4d22, inset 0 2px 3px rgba(255,240,200,.7), inset 0 -3px 6px rgba(0,0,0,.5), 0 24px 60px rgba(0,0,0,.6);
+    color:#2c1c0b}
+  #plate .corner{position:absolute;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3d6,#5c4020 72%);box-shadow:0 1px 2px rgba(0,0,0,.5)}
+  #plate .top{font-family:var(--cond);font-weight:400;font-size:12px;letter-spacing:.42em;color:#3a2611;margin-bottom:6px}
+  #plate h1{font-family:var(--disp);font-weight:900;font-size:clamp(1.9rem,4.6vw,3.3rem);letter-spacing:.06em;margin:0;line-height:1;
+    text-shadow:0 1px 0 rgba(255,240,205,.6),0 -1px 0 rgba(0,0,0,.45)}
+  #plate .no{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:#3a2611;margin-top:8px}
+  #tagline{position:fixed;left:50%;top:calc(12vh + 190px);transform:translateX(-50%);z-index:6;text-align:center;width:min(92vw,640px)}
+  #tagline p{font-family:var(--cond);font-weight:300;font-size:clamp(1rem,2vw,1.4rem);color:#e6d3ad;margin:0;letter-spacing:.02em;
+    text-shadow:0 2px 12px rgba(0,0,0,.8)}
+  .cta{display:flex;gap:16px;justify-content:center;margin-top:26px}
+  .lever{font-family:var(--cond);font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;
+    padding:13px 26px;border-radius:8px;cursor:pointer;text-decoration:none;color:#1c1206;
+    background:linear-gradient(180deg,#e7c489,#a9772f);box-shadow:0 2px 0 #5e3f18,inset 0 1px 0 rgba(255,245,215,.7),0 8px 20px rgba(0,0,0,.5);
+    transition:transform .1s,box-shadow .1s}
+  .lever:active{transform:translateY(2px);box-shadow:0 0 0 #5e3f18,inset 0 1px 0 rgba(255,245,215,.7)}
+  .lever.ghost{background:transparent;color:#e6d3ad;box-shadow:inset 0 0 0 1.5px rgba(230,200,140,.4)}
+
+  /* gauges */
+  .gauge{position:fixed;top:16vh;z-index:6;width:clamp(120px,13vw,168px)}
+  #gaugeL{left:clamp(20px,6vw,90px)} #gaugeR{right:clamp(20px,6vw,90px);top:26vh}
+  .gauge svg{width:100%;height:auto;filter:drop-shadow(0 12px 24px rgba(0,0,0,.6))}
+  .gauge .cap{font-family:var(--cond);font-weight:400;font-size:10px;letter-spacing:.24em;text-align:center;color:var(--soot);margin-top:8px;text-transform:uppercase}
+
+  /* pipes */
+  .pipe{position:fixed;z-index:2;width:16px;background:linear-gradient(90deg,#3a2a17,#caa05a 45%,#7a5626 60%,#2c1e10);border-radius:8px;box-shadow:0 0 0 2px #0b0806,inset 0 0 6px rgba(0,0,0,.5)}
+  #pipeL{left:clamp(28px,7vw,100px);top:30vh;height:44vh}
+  #pipeR{right:clamp(28px,7vw,100px);top:40vh;height:36vh}
+
+  /* nav brass tags */
+  nav{position:fixed;top:22px;right:clamp(20px,5vw,54px);z-index:9;display:flex;gap:10px}
+  nav a{font-family:var(--cond);font-weight:600;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;color:#2a1c0c;
+    padding:7px 13px;border-radius:6px;background:linear-gradient(180deg,#d8b06a,#9c6f30);box-shadow:0 2px 0 #5e3f18,inset 0 1px 0 rgba(255,245,215,.6)}
+  #brandTag{position:fixed;top:22px;left:clamp(20px,5vw,54px);z-index:9;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--soot)}
+  #stoke{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:9;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--soot);text-transform:uppercase}
+  @media (max-width:820px){.gauge,.pipe,#door{display:none}#plate{top:9vh}#tagline{top:calc(9vh + 150px)}}
+</style>
+
+<div id="room"></div><div id="plates"></div>
+
+<div id="pipeL" class="pipe"></div><div id="pipeR" class="pipe"></div>
+
+<div id="door"><span class="handle"></span></div>
+
+<div id="firebox">
+  <div id="opening"><canvas id="fire"></canvas><div id="grate"></div></div>
+</div>
+
+<div class="gauge" id="gaugeL"><div class="cap">Boiler Pressure</div></div>
+<div class="gauge" id="gaugeR"><div class="cap">Steam Flow</div></div>
+
+<div id="plate">
+  <span class="corner" style="left:10px;top:10px"></span><span class="corner" style="right:10px;top:10px"></span>
+  <span class="corner" style="left:10px;bottom:10px"></span><span class="corner" style="right:10px;bottom:10px"></span>
+  <div class="top">Mechanical · Digital</div>
+  <h1>MUHAMMAD AHMAD</h1>
+  <div class="no">ENGINE Nº 001 — EST. 2026</div>
+</div>
+<div id="tagline">
+  <p>I build software the way they built engines — for weight, heat, and things that actually run.</p>
+  <div class="cta"><a class="lever" href="#">View the works</a><a class="lever ghost" href="#">Send word</a></div>
+</div>
+
+<div id="brandTag">M.A. LOCOMOTIVE WORKS</div>
+<nav><a href="#">Works</a><a href="#">Logbook</a><a href="#">Contact</a></nav>
+<canvas id="fire-lay"></canvas>
+<div id="flick"></div><div id="vig"></div>
+<div id="stoke">◂ move toward the fire to stoke it ▸</div>
+
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,RM?1:2);
+
+/* rivets around the opening */
+(function(){const fb=document.getElementById("firebox");const N=14;
+  for(let i=0;i<N;i++){const r=document.createElement("span");r.className="rivet";
+    const a=Math.PI*(0.08+0.84*(i/(N-1)));const rx=50-Math.cos(a)*46,ry=50-Math.sin(a)*46;
+    r.style.left=rx+"%";r.style.top=(6+ry*0.9)+"%";fb.appendChild(r);}})();
+
+/* gauges */
+function gauge(el,{lo,hi,danger}){
+  el.insertAdjacentHTML("afterbegin",`
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <defs><radialGradient id="bz" cx="35%" cy="30%"><stop offset="0" stop-color="#f2d38a"/><stop offset=".55" stop-color="#b98a49"/><stop offset="1" stop-color="#5e421f"/></radialGradient>
+    <radialGradient id="fc" cx="50%" cy="42%"><stop offset="0" stop-color="#efe6d0"/><stop offset="1" stop-color="#c8ba9c"/></radialGradient></defs>
+    <circle cx="50" cy="50" r="48" fill="url(#bz)"/><circle cx="50" cy="50" r="41" fill="#2a2015"/><circle cx="50" cy="50" r="38" fill="url(#fc)"/>
+    <path d="M22 74 A38 38 0 0 1 78 74" fill="none" stroke="#3a2c18" stroke-width="1.2"/>
+    <path d="M63 79 A38 38 0 0 1 82 55" fill="none" stroke="#a11d0f" stroke-width="4" opacity=".8"/>
+    <g stroke="#3a2c18" stroke-width="1.4">${Array.from({length:9},(_,i)=>{const a=(-220+ i*(260/8))*Math.PI/180;const x1=50+Math.cos(a)*33,y1=50+Math.sin(a)*33,x2=50+Math.cos(a)*38,y2=50+Math.sin(a)*38;return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;}).join("")}</g>
+    <g class="needle" style="transform-origin:50px 50px"><line x1="50" y1="54" x2="50" y2="18" stroke="#7a0f06" stroke-width="2.4" stroke-linecap="round"/></g>
+    <circle cx="50" cy="50" r="4.5" fill="url(#bz)" stroke="#2a2015" stroke-width="1"/>
+  </svg>`);
+  return el.querySelector(".needle");
+}
+const nL=gauge(document.getElementById("gaugeL"),{}),nR=gauge(document.getElementById("gaugeR"),{});
+let needleL=0,needleR=0;
+
+/* interaction: stoke by cursor proximity to firebox */
+let stokeT=0.25,stoke=0.25,mx=innerWidth/2,my=innerHeight;
+addEventListener("pointermove",e=>{mx=e.clientX;my=e.clientY;});
+
+/* ---- fire canvas ---- */
+const fc=document.getElementById("fire"),fx=fc.getContext("2d");
+function fireSize(){const r=fc.getBoundingClientRect();fc.width=Math.max(2,r.width*DPR);fc.height=Math.max(2,r.height*DPR);}
+function drawFire(t){
+  const w=fc.width,h=fc.height;fx.clearRect(0,0,w,h);
+  const flick=RM?1:(0.82+0.18*Math.sin(t*11)+0.12*Math.random());
+  const I=(0.7+0.6*stoke)*flick;
+  fx.globalCompositeOperation="lighter";
+  let g=fx.createRadialGradient(w/2,h*0.98,0,w/2,h*0.98,h*0.95);
+  g.addColorStop(0,`rgba(255,150,45,${0.55*I})`);g.addColorStop(.5,`rgba(255,70,12,${0.32*I})`);g.addColorStop(1,"rgba(70,10,0,0)");
+  fx.fillStyle=g;fx.fillRect(0,0,w,h);
+  const n=16;
+  for(let i=0;i<n;i++){
+    const bx=w*(0.12+0.76*(i/(n-1)))+(RM?0:Math.sin(t*2+i)*w*0.03);
+    const fh=h*(0.34+0.44*Math.abs(Math.sin(t*3+i*1.7)))*I, bw=w*0.085;
+    const gy=fx.createLinearGradient(0,h,0,h-fh);
+    gy.addColorStop(0,`rgba(255,95,22,${0.5*I})`);gy.addColorStop(.55,`rgba(255,165,50,${0.42*I})`);gy.addColorStop(1,"rgba(255,225,130,0)");
+    fx.fillStyle=gy;fx.beginPath();fx.moveTo(bx-bw,h);
+    fx.quadraticCurveTo(bx-bw*0.4+(RM?0:Math.sin(t*4+i)*9),h-fh*0.5,bx,h-fh);
+    fx.quadraticCurveTo(bx+bw*0.4+(RM?0:Math.sin(t*4+i+2)*9),h-fh*0.5,bx+bw,h);
+    fx.closePath();fx.fill();
+  }
+  let c=fx.createRadialGradient(w/2,h,0,w/2,h,h*0.5);
+  c.addColorStop(0,`rgba(255,240,185,${0.55*I})`);c.addColorStop(1,"rgba(255,180,60,0)");
+  fx.fillStyle=c;fx.fillRect(0,0,w,h);
+  fx.globalCompositeOperation="source-over";
+}
+
+/* ---- embers + steam (front) ---- */
+const lay=document.getElementById("fire-lay"),lx=lay.getContext("2d");
+let LW,LH,embers=[],steam=[],openRect={x:0,y:0,w:0,h:0};
+function laySize(){LW=lay.width=innerWidth*DPR;LH=lay.height=innerHeight*DPR;}
+function refreshRect(){const r=document.getElementById("opening").getBoundingClientRect();
+  openRect={x:r.left*DPR,y:r.top*DPR,w:r.width*DPR,h:r.height*DPR};}
+function spawnEmber(){const o=openRect;embers.push({x:o.x+o.w*(0.2+0.6*Math.random()),y:o.y+o.h*0.9,
+  vx:(Math.random()-.5)*0.5*DPR,vy:-(0.6+Math.random()*1.6)*DPR,life:1,sz:(0.8+Math.random()*1.8)*DPR,ph:Math.random()*6});}
+function spawnSteam(sx){steam.push({x:sx,y:openRect.y+openRect.h*0.1,vx:(Math.random()-.5)*0.3*DPR,vy:-(0.3+Math.random()*0.7)*DPR,
+  life:1,sz:(20+Math.random()*30)*DPR,gr:(0.4+Math.random()*0.5)*DPR});}
+function drawLay(t){
+  lx.clearRect(0,0,LW,LH);
+  // steam
+  const sSpawn=RM?0:(0.5+stoke*0.8);
+  if(Math.random()<sSpawn)spawnSteam(openRect.x+openRect.w*(0.3+0.4*Math.random()));
+  if(Math.random()<0.25)spawnSteam(LW*(Math.random()<.5?0.12:0.88));
+  for(const s of steam){s.x+=s.vx;s.y+=s.vy;s.sz+=s.gr;s.life-=0.004;
+    const a=Math.max(0,s.life)*0.10;const g=lx.createRadialGradient(s.x,s.y,0,s.x,s.y,s.sz);
+    g.addColorStop(0,`rgba(200,192,178,${a})`);g.addColorStop(1,"rgba(200,192,178,0)");lx.fillStyle=g;
+    lx.beginPath();lx.arc(s.x,s.y,s.sz,0,7);lx.fill();}
+  steam=steam.filter(s=>s.life>0&&s.y>-60);
+  // embers
+  const eSpawn=RM?0:(1.2+stoke*4);
+  for(let i=0;i<eSpawn;i++)if(Math.random()<eSpawn-Math.floor(eSpawn)||i<Math.floor(eSpawn))spawnEmber();
+  lx.globalCompositeOperation="lighter";
+  for(const e of embers){e.x+=e.vx+Math.sin(t*3+e.ph)*0.25*DPR;e.y+=e.vy;e.vy*=0.995;e.life-=0.008;
+    const a=Math.max(0,e.life);lx.fillStyle=`rgba(255,${150+80*a|0},${40*a|0},${a})`;
+    lx.beginPath();lx.arc(e.x,e.y,e.sz*(0.5+a*0.6),0,7);lx.fill();}
+  lx.globalCompositeOperation="source-over";
+  embers=embers.filter(e=>e.life>0);
+}
+
+/* ---- loop ---- */
+const flickEl=document.getElementById("flick"),plate=document.getElementById("plate"),tagEl=document.getElementById("tagline");
+function resize(){fireSize();laySize();refreshRect();}
+addEventListener("resize",resize);
+function frame(now){
+  const t=now/1000;
+  refreshRect();
+  const dcx=openRect.x/DPR+openRect.w/DPR/2, dcy=openRect.y/DPR+openRect.h/DPR/2;
+  const d=Math.hypot(mx-dcx,my-dcy), range=Math.max(innerWidth,innerHeight)*0.6;
+  stokeT=RM?0.4:Math.max(0.15,Math.min(1,1-d/range));
+  stoke+=(stokeT-stoke)*0.06;
+  drawFire(t);drawLay(t);
+  // flicker overlay + light bloom
+  flickEl.style.opacity=RM?0.5:(0.45+0.3*stoke+0.12*Math.sin(t*13)+0.06*Math.random());
+  // gauge needles: map stoke to sweep (-120deg..+120deg) with jitter
+  const jit=RM?0:Math.sin(t*9)*3+Math.random()*2;
+  const gL=-120+ (stoke*200)+jit, gR=-120+ (Math.min(1,stoke*1.15)*210)+jit*0.7;
+  needleL+=(gL-needleL)*0.1;needleR+=(gR-needleR)*0.12;
+  nL.style.transform=`rotate(${needleL}deg)`;nR.style.transform=`rotate(${needleR}deg)`;
+  // gentle parallax on plate/tagline
+  const px=(mx/innerWidth-.5),py=(my/innerHeight-.5);
+  plate.style.transform=`translateX(-50%) translate(${px*-10}px,${py*-6}px)`;
+  tagEl.style.transform=`translateX(-50%) translate(${px*-14}px,${py*-8}px)`;
+  if(!RM)requestAnimationFrame(frame);
+}
+resize();
+if(RM){drawFire(0);drawLay(0);nL.style.transform="rotate(-20deg)";nR.style.transform="rotate(-5deg)";flickEl.style.opacity=.5;}
+else requestAnimationFrame(frame);
+</script>

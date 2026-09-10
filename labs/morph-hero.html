@@ -1,0 +1,74 @@
+<title>Morph Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#07080b;--fg:#eef0f4;--fg-dim:#9095a1;--fg-faint:#565b67;--line:rgba(255,255,255,.12);
+    --mono:"JetBrains Mono",ui-monospace,monospace;--body:"Familjen Grotesk",system-ui,sans-serif}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 44%,transparent 54%,rgba(7,8,11,.6))}
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .mark span{color:var(--fg-faint)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--fg-dim);text-decoration:none}.nav a:hover{color:var(--fg)}
+  .lower{position:fixed;left:0;right:0;top:64%;z-index:10;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px;pointer-events:none}
+  .lower *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 16px}
+  .tagline{font-size:clamp(1.02rem,1.9vw,1.35rem);line-height:1.45;color:var(--fg-dim);max-width:34ch;margin:0}
+  .cta{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+  .btn{font-size:15px;font-weight:500;padding:13px 26px;border-radius:100px;cursor:pointer;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:transparent;transition:.25s}
+  .btn:hover{background:rgba(255,255,255,.07)}.btn.primary{background:var(--fg);color:#0a0b0e;border-color:var(--fg)}
+  @media (max-width:720px){.nav{display:none}.lower{top:67%}}
+</style>
+<canvas id="c"></canvas><div id="vig"></div>
+<div class="mark">MUHAMMAD&nbsp;AHMAD&nbsp;<span>/ Engineer</span></div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+<div class="lower"><p class="eyebrow">One person, many hats</p>
+  <p class="tagline">Interfaces, tools, and systems — with an eye for how they feel.</p>
+  <div class="cta"><a class="btn primary" href="#">View work</a><a class="btn" href="#">Get in touch</a></div></div>
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,RM?1:2);
+const cv=document.getElementById("c"),x=cv.getContext("2d");
+const SEQ=[["MUHAMMAD","AHMAD"],["ENGINEER"],["BUILDER"],["SYSTEMS"],["INTERFACES"],["DESIGN"]];
+let W,H,sets=[],parts=[],idx=0,timer=0;
+const p={mx:-9999,my:-9999,on:0};
+addEventListener("pointermove",e=>{p.mx=e.clientX*DPR;p.my=e.clientY*DPR;p.on=1;});
+addEventListener("pointerleave",()=>p.on=0);
+function sample(lines){
+  const o=document.createElement("canvas");o.width=innerWidth;o.height=innerHeight;const g=o.getContext("2d");
+  g.fillStyle="#fff";g.textAlign="center";g.textBaseline="middle";
+  const fs=Math.min(innerWidth*(lines.length>1?0.145:0.2),innerHeight*0.26,lines.length>1?190:250);
+  g.font=`800 ${fs}px "Bricolage Grotesque",sans-serif`;
+  const X=innerWidth/2,Y=innerHeight*0.42,n=lines.length;
+  lines.forEach((ln,i)=>g.fillText(ln,X,Y+(i-(n-1)/2)*fs*0.92));
+  const d=g.getImageData(0,0,innerWidth,innerHeight).data,st=innerWidth<720?6:4,pts=[];
+  for(let yy=0;yy<innerHeight;yy+=st)for(let xx=0;xx<innerWidth;xx+=st)if(d[(yy*innerWidth+xx)*4+3]>128)pts.push([xx*DPR,yy*DPR]);
+  const MAX=innerWidth<720?2600:4600,s=Math.max(1,Math.ceil(pts.length/MAX)),out=[];
+  for(let i=0;i<pts.length;i+=s)out.push(pts[i]);return out;
+}
+function build(){
+  W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;
+  sets=SEQ.map(sample);const N=Math.max(...sets.map(s=>s.length));
+  parts=Array.from({length:N},(_,i)=>{const q=sets[0][i%sets[0].length];
+    return {x:Math.random()*W,y:Math.random()*H,tx:q[0],ty:q[1],vx:0,vy:0,c:Math.random()};});
+  idx=0;timer=performance.now();
+}
+function assign(){const s=sets[idx];parts.forEach((q,i)=>{const t=s[i%s.length];q.tx=t[0];q.ty=t[1];});}
+build();addEventListener("resize",build);
+function frame(now){
+  if(!RM&&now-timer>3400){idx=(idx+1)%sets.length;assign();timer=now;}
+  x.fillStyle="#07080b";x.fillRect(0,0,W,H);x.globalCompositeOperation="lighter";
+  const R=115*DPR,R2=R*R;
+  for(const q of parts){
+    let ax=(q.tx-q.x)*.045,ay=(q.ty-q.y)*.045;
+    if(p.on){const dx=q.x-p.mx,dy=q.y-p.my,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=(R-d)/R*5;ax+=dx/d*f;ay+=dy/d*f;}}
+    q.vx=(q.vx+ax)*.82;q.vy=(q.vy+ay)*.82;q.x+=q.vx;q.y+=q.vy;
+    const r=150+q.c*90|0;x.fillStyle=`rgba(${r},198,255,0.8)`;x.fillRect(q.x,q.y,1.7*DPR,1.7*DPR);
+  }
+  x.globalCompositeOperation="source-over";
+  if(!RM)requestAnimationFrame(frame);
+}
+if(RM){parts.forEach(q=>{q.x=q.tx;q.y=q.ty;});frame(0);}else requestAnimationFrame(frame);
+</script>

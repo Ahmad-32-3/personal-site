@@ -1,0 +1,197 @@
+<title>Hero Lab · Depth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#06070a;--fg:#eef0f4;--fg-dim:#8b909c;--fg-faint:#565b67;--line:rgba(255,255,255,.10);
+    --glass:rgba(14,16,22,.6);--accent:#9fc0ff;--mono:"JetBrains Mono",ui-monospace,monospace;
+    --body:"Familjen Grotesk",system-ui,sans-serif;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;background:radial-gradient(120% 100% at 50% 40%,#0d1017,#06070a 72%)}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #scrim{position:absolute;inset:0;pointer-events:none;z-index:6;
+    background:radial-gradient(110% 90% at 50% 46%,transparent 52%,rgba(6,7,10,.66)),linear-gradient(0deg,rgba(6,7,10,.72),transparent 24%)}
+  #loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--fg-faint);font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;z-index:7}
+  .content{position:relative;z-index:8;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+    text-align:center;padding:0 24px clamp(74px,13vh,150px);pointer-events:none}
+  .content *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 16px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.6rem,7vw,5.6rem);line-height:.96;letter-spacing:-.03em;margin:0;text-wrap:balance}
+  .sub{font-size:clamp(1rem,1.6vw,1.22rem);line-height:1.5;color:var(--fg-dim);max-width:38ch;margin:20px 0 0}
+  .rail{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:40;display:flex;gap:5px;padding:5px;border-radius:100px;
+    border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+  .rail button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 15px;border-radius:100px;border:0;cursor:pointer;
+    background:transparent;color:var(--fg-dim);transition:.2s;display:flex;align-items:baseline;gap:8px}
+  .rail button .n{font-size:10px;color:var(--fg-faint)}
+  .rail button:hover{color:var(--fg)}
+  .rail button[aria-pressed="true"]{background:rgba(255,255,255,.10);color:var(--fg)}
+  .rail button:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+  .mark{position:fixed;top:24px;left:clamp(24px,6vw,56px);z-index:20;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .layers{position:fixed;left:clamp(24px,6vw,56px);bottom:clamp(20px,4vh,38px);z-index:40;font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--fg-faint)}
+  .layers b{color:var(--accent);font-weight:400}
+  .hint{position:fixed;right:clamp(24px,6vw,56px);bottom:clamp(20px,4vh,38px);z-index:40;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--fg-faint)}
+  @media (max-width:720px){.rail button .lbl{display:none}.mark,.hint{display:none}}
+</style>
+
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div id="scrim"></div>
+  <div id="loading">building scene…</div>
+  <div class="content">
+    <p class="eyebrow" id="eyebrow">Muhammad Ahmad · Engineer</p>
+    <h1>Built with depth.</h1>
+    <p class="sub" id="sub">Background, orbit, core, and foreground — four planes moving at their own speed.</p>
+  </div>
+</div>
+
+<div class="mark">MUHAMMAD&nbsp;AHMAD</div>
+<nav class="rail" aria-label="Core">
+  <button data-c="prism" aria-pressed="true"><span class="n">1</span><span class="lbl">Prism core</span></button>
+  <button data-c="chrome" aria-pressed="false"><span class="n">2</span><span class="lbl">Chrome core</span></button>
+  <button data-c="crystal" aria-pressed="false"><span class="n">3</span><span class="lbl">Signal core</span></button>
+</nav>
+<div class="layers" id="layers"></div>
+<div class="hint">move cursor · parallax</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,REDUCED?1:1.4);
+const canvas=document.getElementById("gl");
+const ptr={x:0,y:0,tx:0,ty:0};
+addEventListener("pointermove",e=>{ptr.tx=e.clientX/innerWidth-.5;ptr.ty=e.clientY/innerHeight-.5;});
+
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(DPR); renderer.setClearColor(0x06070a,1);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05; renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene(); scene.fog=new THREE.FogExp2(0x06070a,0.028);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,220); camera.position.set(0,0,13);
+
+// soft round sprite texture
+function disc(){const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");
+  const rg=g.createRadialGradient(32,32,0,32,32,32);rg.addColorStop(0,"rgba(255,255,255,1)");rg.addColorStop(.35,"rgba(255,255,255,.7)");rg.addColorStop(1,"rgba(255,255,255,0)");
+  g.fillStyle=rg;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);}
+const DISC=disc();
+
+// procedural env for glass/chrome
+function makeEnv(){const c=document.createElement("canvas");c.width=512;c.height=256;const g=c.getContext("2d");
+  const grd=g.createLinearGradient(0,0,0,256);grd.addColorStop(0,"#232c46");grd.addColorStop(1,"#05060a");g.fillStyle=grd;g.fillRect(0,0,512,256);
+  for(const[x,y,col,r] of[[120,70,"#9fb8ff",90],[380,60,"#ffb0d4",70],[260,180,"#8affe6",80]]){const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,col);rg.addColorStop(1,"transparent");g.fillStyle=rg;g.fillRect(0,0,512,256);}
+  const tex=new THREE.CanvasTexture(c);tex.mapping=THREE.EquirectangularReflectionMapping;
+  const pm=new THREE.PMREMGenerator(renderer);const env=pm.fromEquirectangular(tex).texture;tex.dispose();pm.dispose();return env;}
+scene.environment=makeEnv();
+
+// ---- lights (recolored per preset) ----
+const hemi=new THREE.HemisphereLight(0xaec4ff,0x07080b,.55); scene.add(hemi);
+const key=new THREE.DirectionalLight(0xffffff,1.2); key.position.set(4,6,6); scene.add(key);
+const rimA=new THREE.PointLight(0x66e0ff,70,60); rimA.position.set(-9,2,3); scene.add(rimA);
+const rimB=new THREE.PointLight(0xff7ac0,60,60); rimB.position.set(8,-4,-2); scene.add(rimB);
+
+// ================= BACKGROUND layer =================
+const bg=new THREE.Group(); scene.add(bg);
+// starfield
+const N=REDUCED?300:900, sp=new Float32Array(N*3);
+for(let i=0;i<N;i++){const r=40+Math.random()*60,th=Math.random()*6.28,ph=Math.acos(2*Math.random()-1);
+  sp[i*3]=r*Math.sin(ph)*Math.cos(th);sp[i*3+1]=r*Math.sin(ph)*Math.sin(th);sp[i*3+2]=r*Math.cos(ph)-30;}
+const sgeo=new THREE.BufferGeometry();sgeo.setAttribute("position",new THREE.BufferAttribute(sp,3));
+const stars=new THREE.Points(sgeo,new THREE.PointsMaterial({size:.5,map:DISC,transparent:true,depthWrite:false,color:0x9fb6e0,blending:THREE.AdditiveBlending,sizeAttenuation:true}));
+bg.add(stars);
+// faint slow wireframe shell far back
+const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(20,1),new THREE.MeshBasicMaterial({color:0x141a2a,wireframe:true,transparent:true,opacity:.4}));
+shell.position.z=-18; bg.add(shell);
+
+// ================= FOREGROUND bokeh layer =================
+const fg=new THREE.Group(); scene.add(fg);
+const bokeh=[];
+for(let i=0;i<(REDUCED?6:16);i++){
+  const m=new THREE.Sprite(new THREE.SpriteMaterial({map:DISC,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.14,color:0x9fc0ff}));
+  const s=1.4+Math.random()*3.4; m.scale.set(s,s,1);
+  m.position.set((Math.random()-.5)*22,(Math.random()-.5)*13,6+Math.random()*3);
+  m.userData={sp:.1+Math.random()*.3,ph:Math.random()*6,ox:m.position.x,oy:m.position.y};
+  fg.add(m); bokeh.push(m);
+}
+
+// ================= MIDDLE (core + orbit) — rebuilt per preset =================
+let core=null, orbit=null;
+const glass=()=>new THREE.MeshPhysicalMaterial({transmission:1,thickness:2,ior:1.5,roughness:.03,iridescence:1,iridescenceThicknessRange:[120,420],clearcoat:1,clearcoatRoughness:.06,envMapIntensity:1.4,color:0xffffff});
+const chromeMat=()=>new THREE.MeshStandardMaterial({color:0xd6deee,metalness:1,roughness:.15,envMapIntensity:1.4});
+
+function clearMiddle(){ [core,orbit].forEach(o=>{if(o){scene.remove(o);o.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material){(Array.isArray(x.material)?x.material:[x.material]).forEach(m=>m.dispose&&m.dispose());}});}}); core=orbit=null; }
+
+const PRESETS={
+  prism:{a:"#9fc0ff",rimA:0x66e0ff,rimB:0xff7ac0,bokeh:0x9fc0ff,
+    build(){ core=new THREE.Group();
+      const defs=[[1.5,2.4,0,0,0],[.8,1.3,-1.9,1.1,-.5],[.95,1.5,1.8,-1,.3]];
+      defs.forEach(([r,h,x,y,z])=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,3),glass());m.position.set(x,y,z);m.rotation.set(Math.random(),Math.random(),Math.random());m.userData.spin=1;core.add(m);});
+      scene.add(core); orbit=makeOrbit(()=>new THREE.Mesh(new THREE.OctahedronGeometry(.34,0),glass()),12);
+    }},
+  chrome:{a:"#cdd7ea",rimA:0x8fd4ff,rimB:0xffb27d,bokeh:0xcdd7ea,
+    build(){ core=new THREE.Group();
+      const knot=new THREE.Mesh(new THREE.TorusKnotGeometry(1.5,.5,180,28,2,3),chromeMat());knot.userData.spin=1;core.add(knot);
+      scene.add(core); orbit=makeOrbit(()=>new THREE.Mesh(new THREE.TetrahedronGeometry(.42),chromeMat()),12);
+    }},
+  crystal:{a:"#7fe6d0",rimA:0x4fe0d0,rimB:0x6ea8ff,bokeh:0x7fe6d0,
+    build(){ core=new THREE.Group();
+      const c=new THREE.Mesh(new THREE.IcosahedronGeometry(1.9,0),glass());core.add(c);
+      const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(2.15,0),new THREE.MeshBasicMaterial({color:0x5fe6d0,wireframe:true,transparent:true,opacity:.5}));wire.userData.spin=1;core.add(wire);
+      scene.add(core);
+      // signal orbit: glowing nodes + connecting ring line
+      orbit=new THREE.Group(); const R=4.6,n=14,pts=[];
+      const nodeMat=new THREE.MeshBasicMaterial({color:0xbafff0});
+      for(let i=0;i<n;i++){const a=i/n*6.283;const p=new THREE.Vector3(Math.cos(a)*R,Math.sin(a*2)*.7,Math.sin(a)*R);
+        const nd=new THREE.Mesh(new THREE.SphereGeometry(.12,10,10),nodeMat);nd.position.copy(p);orbit.add(nd);pts.push(p);}
+      pts.push(pts[0].clone());
+      const lg=new THREE.BufferGeometry().setFromPoints(pts);
+      orbit.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x4fd6c4,transparent:true,opacity:.5})));
+      orbit.userData.orbit=1; scene.add(orbit);
+    }},
+};
+function makeOrbit(makeItem,n){
+  const g=new THREE.Group(); const R=4.6;
+  // faint orbit ring path
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(R,.012,8,120),new THREE.MeshBasicMaterial({color:0x2a3350,transparent:true,opacity:.6}));
+  ring.rotation.x=Math.PI/2; g.add(ring);
+  for(let i=0;i<n;i++){const a=i/n*6.283;const it=makeItem();const s=.6+Math.random()*.7;it.scale.setScalar(s);
+    it.position.set(Math.cos(a)*R,Math.sin(a*2)*.8,Math.sin(a)*R);it.userData={rx:(Math.random()-.5)*.02,ry:(Math.random()-.5)*.02};g.add(it);}
+  g.userData.orbit=1; scene.add(g); return g;
+}
+
+function setPreset(c){
+  clearMiddle(); const P=PRESETS[c]; P.build();
+  rimA.color.setHex(P.rimA); rimB.color.setHex(P.rimB);
+  bokeh.forEach(b=>b.material.color.setHex(P.bokeh));
+  document.documentElement.style.setProperty("--accent",P.a);
+  document.querySelectorAll(".rail button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  document.getElementById("layers").innerHTML=`<b>◾ background</b> stars · shell<br><b>◾ orbit</b> circulating belt<br><b>◾ core</b> ${c}<br><b>◾ foreground</b> bokeh drift`;
+  current=c;
+}
+
+// ================= loop =================
+let current="prism",t0=performance.now();
+function frame(now){
+  const t=(now-t0)/1000;
+  ptr.x+=(ptr.tx-ptr.x)*.05; ptr.y+=(ptr.ty-ptr.y)*.05;
+  if(core) core.children.forEach(o=>{ if(o.userData.spin){o.rotation.y+=.006;o.rotation.x+=.0025;} });
+  if(orbit){ orbit.rotation.y=t*.18; orbit.children.forEach(o=>{if(o.userData&&o.userData.rx){o.rotation.x+=o.userData.rx;o.rotation.y+=o.userData.ry;}}); }
+  bg.rotation.y=t*.01; shell.rotation.x=t*.02;
+  bokeh.forEach(b=>{b.position.x=b.userData.ox+Math.sin(t*b.userData.sp+b.userData.ph)*1.2;b.position.y=b.userData.oy+Math.cos(t*b.userData.sp*.8+b.userData.ph)*.8;});
+  // parallax: nearer layers shift more (camera move + counter-move of layers by depth)
+  camera.position.x=ptr.x*2.4; camera.position.y=-ptr.y*1.8;
+  fg.position.x=-ptr.x*3.2; fg.position.y=ptr.y*2.4;      // foreground exaggerated
+  bg.position.x=ptr.x*0.8;  bg.position.y=-ptr.y*0.6;     // background subtle
+  camera.lookAt(ptr.x*1.2,-ptr.y*1,0);
+  renderer.render(scene,camera);
+  if(!REDUCED) raf=requestAnimationFrame(frame);
+}
+let raf=0;
+function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+addEventListener("resize",resize);
+document.querySelectorAll(".rail button").forEach(b=>b.addEventListener("click",()=>setPreset(b.dataset.c)));
+addEventListener("keydown",e=>{const m={"1":"prism","2":"chrome","3":"crystal"};if(m[e.key])setPreset(m[e.key]);});
+
+resize(); setPreset("prism");
+document.getElementById("loading").style.display="none";
+if(REDUCED){ frame(performance.now()); } else raf=requestAnimationFrame(frame);
+</script>

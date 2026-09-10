@@ -1,0 +1,136 @@
+<title>Prism · Dark Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#060607;--fg:#ecedf1;--fg-dim:#9a9da8;--fg-faint:#565863;--line:rgba(255,255,255,.13);
+    --display:"Bricolage Grotesque",system-ui,sans-serif;--body:"Familjen Grotesk",system-ui,sans-serif;--mono:"JetBrains Mono",monospace}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #grain{position:fixed;inset:0;pointer-events:none;opacity:.06;mix-blend-mode:overlay;background-image:radial-gradient(circle,#fff 0.5px,transparent 0.6px);background-size:3px 3px}
+  #top{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(6,6,7,.75),transparent 24%),radial-gradient(100% 82% at 50% 54%,transparent 44%,rgba(4,4,6,.62))}
+  #loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--fg-faint);font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase}
+  nav{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;
+    padding:22px clamp(24px,6vw,64px);font-family:var(--mono);font-size:12px;letter-spacing:.14em}
+  nav .brand{color:var(--fg);font-weight:500}nav .links{display:flex;gap:28px}
+  nav a{color:var(--fg-dim);text-decoration:none;transition:color .2s}nav a:hover{color:var(--fg)}
+  .hero{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 24px 6vh;pointer-events:none}
+  .hero>*{pointer-events:auto}
+  .badge{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+    padding:8px 16px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--fg-dim);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);margin-bottom:28px}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:#8a9bb5;box-shadow:0 0 9px rgba(160,180,210,.6)}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.7rem,7.4vw,6rem);line-height:.96;letter-spacing:-.035em;margin:0;max-width:16ch;text-wrap:balance;text-shadow:0 6px 40px rgba(0,0,0,.6)}
+  h1 .g{background:linear-gradient(100deg,#dfe4ee,#aeb7c8 70%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:clamp(1.02rem,1.7vw,1.28rem);line-height:1.5;color:var(--fg-dim);max-width:48ch;margin:26px 0 0;text-shadow:0 2px 20px rgba(0,0,0,.7)}
+  .cta{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap;justify-content:center}
+  .btn{font-family:var(--body);font-size:15px;font-weight:500;padding:14px 28px;border-radius:100px;cursor:pointer;text-decoration:none;
+    border:1px solid var(--line);color:var(--fg);background:rgba(255,255,255,.03);transition:background .25s,transform .2s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.primary{background:var(--fg);color:#0a0b0e;border-color:var(--fg)}
+  .btn.ghost:hover{background:rgba(255,255,255,.07)}
+  .foot{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:20;font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--fg-faint);text-transform:uppercase}
+  @media (max-width:720px){nav .links{display:none}}
+</style>
+
+<canvas id="gl"></canvas>
+<div id="grain"></div><div id="top"></div>
+<div id="loading">lighting the room…</div>
+
+<nav><span class="brand">MUHAMMAD AHMAD</span>
+  <span class="links"><a href="#">Work</a><a href="#">About</a><a href="#">Writing</a><a href="#">Contact</a></span></nav>
+
+<div class="hero">
+  <span class="badge"><span class="dot"></span> Available for new work</span>
+  <h1>I build software<br>that feels <span class="g">alive</span>.</h1>
+  <p class="sub">Engineer and designer shipping interfaces, tools, and systems — with an eye for how they move, not just what they do.</p>
+  <div class="cta"><a class="btn primary" href="#">View the work</a><a class="btn ghost" href="#">Get in touch</a></div>
+</div>
+<div class="foot">move the cursor</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(!window.THREE){document.getElementById("loading").textContent="3D failed to load";}
+else (function(){
+  const DPR=Math.min(devicePixelRatio||1,RM?1:1.8);
+  const canvas=document.getElementById("gl");
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(DPR);renderer.setClearColor(0x060607,1);
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.98;renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x060607,0.05);
+  const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,120);camera.position.set(0,0.6,9);
+
+  // realistic dim-room environment: mostly dark with a soft daylight window
+  function env(){const c=document.createElement("canvas");c.width=512;c.height=256;const g=c.getContext("2d");
+    const base=g.createLinearGradient(0,0,0,256);base.addColorStop(0,"#2b2e34");base.addColorStop(.5,"#111318");base.addColorStop(1,"#070809");g.fillStyle=base;g.fillRect(0,0,512,256);
+    // soft cool window (main reflection)
+    function window_(cx,cy,w,h,col,a){const gr=g.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h));
+      gr.addColorStop(0,`rgba(${col},${a})`);gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;
+      g.save();g.translate(cx,cy);g.scale(w/Math.max(w,h),h/Math.max(w,h));g.beginPath();g.arc(0,0,Math.max(w,h),0,7);g.fill();g.restore();}
+    window_(150,90,70,120,"210,224,238",0.95);   // tall window, cool daylight
+    window_(360,80,60,90,"200,214,230",0.6);      // secondary
+    window_(430,190,80,60,"120,96,70",0.3);       // faint warm bounce from floor
+    const t=new THREE.CanvasTexture(c);t.mapping=THREE.EquirectangularReflectionMapping;
+    const pm=new THREE.PMREMGenerator(renderer);const e=pm.fromEquirectangular(t).texture;t.dispose();pm.dispose();return e;}
+  scene.environment=env();
+
+  // ---- room ----
+  const FLOOR=-1.6;
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(160,160),
+    new THREE.MeshStandardMaterial({color:0x0c0d11,roughness:.6,metalness:.15,envMapIntensity:.6}));
+  floor.rotation.x=-Math.PI/2;floor.position.y=FLOOR;floor.receiveShadow=true;scene.add(floor);
+  // back wall, matte, faint window light patch
+  const wallTex=(()=>{const c=document.createElement("canvas");c.width=256;c.height=256;const g=c.getContext("2d");
+    g.fillStyle="#0b0c10";g.fillRect(0,0,256,256);const gr=g.createRadialGradient(90,90,0,90,90,150);
+    gr.addColorStop(0,"rgba(150,166,186,.5)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,256,256);
+    return new THREE.CanvasTexture(c);})();
+  const wall=new THREE.Mesh(new THREE.PlaneGeometry(90,52),new THREE.MeshStandardMaterial({map:wallTex,roughness:1,metalness:0}));
+  wall.position.set(0,6,-16);scene.add(wall);
+
+  // ---- soft realistic light ----
+  scene.add(new THREE.HemisphereLight(0x8a94a6,0x060607,.28));
+  const key=new THREE.DirectionalLight(0xeef2ff,2.0);key.position.set(-6,8,5);key.castShadow=true;   // from the window
+  key.shadow.mapSize.set(2048,2048);key.shadow.radius=10;key.shadow.bias=-0.0004;
+  const sc=key.shadow.camera;sc.left=-9;sc.right=9;sc.top=9;sc.bottom=-9;sc.near=1;sc.far=34;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xb9a68c,0.4);fill.position.set(6,2,3);scene.add(fill);  // faint warm bounce
+
+  // ---- smoky-glass (realistic, low iridescence, cool tint) ----
+  const glass=()=>new THREE.MeshPhysicalMaterial({transmission:1,thickness:2.2,ior:1.5,roughness:.05,metalness:0,
+    iridescence:.08,clearcoat:.5,clearcoatRoughness:.12,envMapIntensity:1.15,
+    attenuationColor:new THREE.Color(0x2b3440),attenuationDistance:3.4,color:0xdfe6ee});
+
+  const group=new THREE.Group();scene.add(group);
+  const shapes=[
+    {g:new THREE.CylinderGeometry(1.5,1.5,3.0,6,1),x:0,z:-.6,rs:[.0004,.0016,.0006]},
+    {g:new THREE.CylinderGeometry(1.0,1.0,1.9,3,1),x:-3.5,z:.5,rs:[.0016,.001,.0006]},
+    {g:new THREE.CylinderGeometry(1.1,1.1,2.0,3,1),x:3.3,z:.1,rs:[.0008,.0018,.0007]},
+    {g:new THREE.OctahedronGeometry(1.05,0),x:-2.1,z:1.4,rs:[.0012,.001,.0014]},
+    {g:new THREE.DodecahedronGeometry(.95,0),x:2.3,z:1.3,rs:[.001,.0014,.0007]},
+  ];
+  const items=[];
+  shapes.forEach((s,i)=>{const geo=s.g;const bb=new THREE.Box3().setFromObject(new THREE.Mesh(geo));const h=bb.max.y-bb.min.y;
+    const m=new THREE.Mesh(geo,glass());m.castShadow=true;
+    m.position.set(s.x,FLOOR+h/2+(i===0?0:.15),s.z);m.rotation.set(Math.random()*3,Math.random()*3,Math.random()*3);
+    m.userData={rs:s.rs,fy:Math.random()*6,by:m.position.y};group.add(m);items.push(m);});
+
+  const p={x:0,y:0,tx:0,ty:0};
+  addEventListener("pointermove",e=>{p.tx=e.clientX/innerWidth-.5;p.ty=e.clientY/innerHeight-.5;});
+  function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+  addEventListener("resize",resize);resize();
+  document.getElementById("loading").style.display="none";
+
+  let t0=performance.now();
+  function frame(now){const t=(now-t0)/1000;
+    p.x+=(p.tx-p.x)*.04;p.y+=(p.ty-p.y)*.04;
+    items.forEach(m=>{if(!RM){m.rotation.x+=m.userData.rs[0];m.rotation.y+=m.userData.rs[1];m.rotation.z+=m.userData.rs[2];
+      m.position.y=m.userData.by+Math.sin(t*.4+m.userData.fy)*.09;}});
+    group.rotation.y=p.x*.26;
+    camera.position.x=p.x*1.3;camera.position.y=0.6-p.y*.5;camera.lookAt(0,-0.3,0);
+    renderer.render(scene,camera);
+    if(!RM)requestAnimationFrame(frame);
+  }
+  if(RM)frame(0);else requestAnimationFrame(frame);
+})();
+</script>

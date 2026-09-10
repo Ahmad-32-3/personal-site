@@ -1,0 +1,64 @@
+<title>Flow · Plasma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#080611;--fg:#f3f0fb;--fg-dim:#b7b2c8;--fg-faint:#726c86;--line:rgba(255,255,255,.16);
+    --mono:"JetBrains Mono",ui-monospace,monospace;--body:"Familjen Grotesk",system-ui,sans-serif;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #scrim{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 100% at 50% 42%,transparent 46%,rgba(8,6,17,.55)),linear-gradient(0deg,rgba(8,6,17,.6),transparent 32%)}
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--fg-dim);text-decoration:none}.nav a:hover{color:var(--fg)}
+  .hero{position:fixed;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 24px;pointer-events:none}
+  .hero *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(3rem,9vw,7rem);line-height:.92;letter-spacing:-.035em;margin:0;text-wrap:balance;
+    background:linear-gradient(100deg,#fff,#d9c8ff 45%,#a8e6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:clamp(1.02rem,1.7vw,1.28rem);line-height:1.5;color:var(--fg-dim);max-width:40ch;margin:22px 0 0}
+  .cta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;justify-content:center}
+  .btn{font-size:15px;font-weight:500;padding:13px 26px;border-radius:100px;cursor:pointer;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:transparent;transition:.25s}
+  .btn:hover{background:rgba(255,255,255,.1)}.btn.primary{background:var(--fg);color:#0a0812;border-color:var(--fg)}
+  .tag{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:10;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--fg-faint)}
+  @media (max-width:720px){.nav{display:none}}
+</style>
+<canvas id="c"></canvas><div id="scrim"></div>
+<div class="mark">MUHAMMAD&nbsp;AHMAD</div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+<div class="hero"><p class="eyebrow">Engineer · Builder</p>
+  <h1>In&nbsp;flow.</h1>
+  <p class="sub">A domain-warped color field, drifting forever — soft, grainy, and alive under the cursor.</p>
+  <div class="cta"><a class="btn primary" href="#">View work</a><a class="btn" href="#">Get in touch</a></div></div>
+<div class="tag">DOMAIN-WARPED FBM · GRADIENT PLASMA SHADER</div>
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,RM?1:1.5);
+const cv=document.getElementById("c"),gl=cv.getContext("webgl2");
+const m={x:0,y:0,tx:0,ty:0};addEventListener("pointermove",e=>{m.tx=e.clientX/innerWidth-.5;m.ty=e.clientY/innerHeight-.5;});
+const VS=`#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+const FS=`#version 300 es
+precision highp float;uniform vec2 uRes;uniform float uTime;uniform vec2 uM;out vec4 o;
+float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);float a=h(i),b=h(i+vec2(1,0)),c=h(i+vec2(0,1)),d=h(i+vec2(1,1));vec2 u=f*f*(3.-2.*f);return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);}
+float fbm(vec2 p){float s=0.,a=.5;mat2 mm=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){s+=a*n(p);p=mm*p;a*=.5;}return s;}
+void main(){vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uRes.y;vec2 p=uv*1.4+uM*0.4;float t=uTime*0.06;
+  vec2 q=vec2(fbm(p+vec2(0.,t)),fbm(p+vec2(5.2,-t)));
+  vec2 r=vec2(fbm(p+3.*q+vec2(1.7,9.2)+t*0.5),fbm(p+3.*q+vec2(8.3,2.8)-t*0.5));
+  float f=fbm(p+2.4*r);
+  vec3 c1=vec3(0.09,0.05,0.24),c2=vec3(0.55,0.24,0.75),c3=vec3(0.25,0.68,0.95),c4=vec3(0.95,0.78,0.62);
+  vec3 col=mix(c1,c2,clamp(f*1.4,0.,1.));col=mix(col,c3,clamp(r.x*1.1,0.,1.));col=mix(col,c4,clamp(pow(q.y,2.)*0.8,0.,1.));
+  col*=0.5+0.6*f;col+= (h(gl_FragCoord.xy+uTime)-0.5)*0.05;
+  o=vec4(col,1.);}`;
+function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x;}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+const l=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
+const uR=gl.getUniformLocation(pr,"uRes"),uT=gl.getUniformLocation(pr,"uTime"),uM=gl.getUniformLocation(pr,"uM");
+function size(){cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;gl.viewport(0,0,cv.width,cv.height);}
+size();addEventListener("resize",size);
+function frame(now){m.x+=(m.tx-m.x)*.04;m.y+=(m.ty-m.y)*.04;
+  gl.uniform2f(uR,cv.width,cv.height);gl.uniform1f(uT,now/1000);gl.uniform2f(uM,m.x,m.y);gl.drawArrays(gl.TRIANGLES,0,3);
+  if(!RM)requestAnimationFrame(frame);}
+frame(RM?3000:0);
+</script>

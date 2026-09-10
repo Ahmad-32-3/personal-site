@@ -1,0 +1,232 @@
+<title>Hero Lab · Particle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#07080b;--fg:#eef0f4;--fg-dim:#8b909c;--fg-faint:#565b67;--line:rgba(255,255,255,.10);
+    --glass:rgba(14,16,22,.6);--accent:#9fc0ff;--mono:"JetBrains Mono",ui-monospace,monospace;
+    --body:"Familjen Grotesk",system-ui,sans-serif;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;background:radial-gradient(130% 110% at 50% 34%,#0e1119,#07080b 72%)}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 44%,transparent 56%,rgba(7,8,11,.55))}
+  .mark{position:fixed;top:24px;left:clamp(24px,6vw,64px);z-index:20;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .mark span{color:var(--fg-faint)}
+  .rail{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:40;display:flex;gap:5px;padding:5px;border-radius:100px;
+    border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+  .rail button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 15px;border-radius:100px;border:0;cursor:pointer;
+    background:transparent;color:var(--fg-dim);transition:.2s;display:flex;align-items:baseline;gap:8px}
+  .rail button .n{font-size:10px;color:var(--fg-faint)}
+  .rail button:hover{color:var(--fg)}
+  .rail button[aria-pressed="true"]{background:rgba(255,255,255,.10);color:var(--fg)}
+  .rail button:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+  .caption{position:fixed;left:clamp(24px,6vw,64px);bottom:clamp(20px,4vh,40px);z-index:40;max-width:min(560px,80vw)}
+  .caption .k{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 7px}
+  .caption p{margin:0;font-size:13.5px;line-height:1.5;color:var(--fg-dim)}
+  .caption p b{color:var(--fg);font-weight:500}
+  .hint{position:fixed;right:clamp(24px,6vw,64px);bottom:clamp(20px,4vh,40px);z-index:40;font-family:var(--mono);font-size:11px;
+    letter-spacing:.1em;color:var(--fg-faint);text-align:right}
+  @media (max-width:720px){.rail button .lbl{display:none}.hint{display:none}}
+</style>
+
+<div id="stage"><canvas id="c"></canvas><div id="vig"></div></div>
+<div class="mark">MUHAMMAD&nbsp;AHMAD&nbsp;<span>/ Engineer</span></div>
+<nav class="rail" aria-label="Concept">
+  <button data-c="constellation" aria-pressed="true"><span class="n">1</span><span class="lbl">Constellation</span></button>
+  <button data-c="current" aria-pressed="false"><span class="n">2</span><span class="lbl">Current</span></button>
+  <button data-c="morph" aria-pressed="false"><span class="n">3</span><span class="lbl">Morph</span></button>
+  <button data-c="reveal" aria-pressed="false"><span class="n">4</span><span class="lbl">Reveal</span></button>
+</nav>
+<div class="caption" id="caption" aria-live="polite"></div>
+<div class="hint" id="hint"></div>
+
+<script>
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,REDUCED?1:1.75);
+const cv=document.getElementById("c"), ctx=cv.getContext("2d");
+let W=0,H=0;
+const ptr={x:-9999,y:-9999,on:0};
+addEventListener("pointermove",e=>{ptr.x=e.clientX*DPR;ptr.y=e.clientY*DPR;ptr.on=1;});
+addEventListener("pointerleave",()=>ptr.on=0);
+
+// shared text sampler -> points in device px
+function sample(lines,{scale=0.155,cy=0.40}={}){
+  const off=document.createElement("canvas"); off.width=innerWidth; off.height=innerHeight;
+  const g=off.getContext("2d"); g.fillStyle="#fff"; g.textAlign="center"; g.textBaseline="middle";
+  const fs=Math.min(innerWidth*scale,innerHeight*0.28,210);
+  g.font=`800 ${fs}px "Bricolage Grotesque",sans-serif`;
+  const cX=innerWidth/2, cY=innerHeight*cy, n=lines.length;
+  lines.forEach((ln,i)=>g.fillText(ln,cX,cY+(i-(n-1)/2)*fs*0.92));
+  const d=g.getImageData(0,0,innerWidth,innerHeight).data, step=innerWidth<720?6:4, pts=[];
+  for(let y=0;y<innerHeight;y+=step)for(let x=0;x<innerWidth;x+=step)
+    if(d[(y*innerWidth+x)*4+3]>128) pts.push([x*DPR,y*DPR]);
+  return pts;
+}
+function cap(pts,max){ if(pts.length<=max)return pts; const s=Math.ceil(pts.length/max),o=[]; for(let i=0;i<pts.length;i+=s)o.push(pts[i]); return o; }
+function noise(x,y){ const n=Math.sin(x*127.1+y*311.7)*43758.5453; return n-Math.floor(n); }
+
+/* ===== 1 · CONSTELLATION — the name IS a living network (Assemble + Signal) ===== */
+const Constellation=(()=>{
+  let fill=[],nodes=[],pulses=[],ok=false;
+  function build(){
+    const pts=cap(sample(["MUHAMMAD","AHMAD"]), innerWidth<720?2600:5200);
+    fill=pts.map(([tx,ty])=>({tx,ty,x:Math.random()*W,y:Math.random()*H,vx:0,vy:0}));
+    const npts=cap(pts, 130);
+    nodes=npts.map(([tx,ty])=>({tx,ty,x:tx,y:ty,vx:0,vy:0}));
+    pulses=[]; ok=true;
+  }
+  function render(){
+    if(!ok)build();
+    ctx.fillStyle="#07080b"; ctx.fillRect(0,0,W,H);
+    const R=110*DPR,R2=R*R;
+    // fill dots
+    ctx.globalCompositeOperation="lighter";
+    for(const p of fill){
+      let ax=(p.tx-p.x)*0.02,ay=(p.ty-p.y)*0.02;
+      if(ptr.on){const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=(R-d)/R*5;ax+=dx/d*f;ay+=dy/d*f;}}
+      p.vx=(p.vx+ax)*0.85;p.vy=(p.vy+ay)*0.85;p.x+=p.vx;p.y+=p.vy;
+      ctx.fillStyle="rgba(120,150,210,0.55)"; ctx.fillRect(p.x,p.y,1.5*DPR,1.5*DPR);
+    }
+    ctx.globalCompositeOperation="source-over";
+    // nodes move like fill
+    for(const nd of nodes){
+      let ax=(nd.tx-nd.x)*0.02,ay=(nd.ty-nd.y)*0.02;
+      if(ptr.on){const dx=nd.x-ptr.x,dy=nd.y-ptr.y,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=(R-d)/R*7;ax+=dx/d*f;ay+=dy/d*f;}}
+      nd.vx=(nd.vx+ax)*0.85;nd.vy=(nd.vy+ay)*0.85;nd.x+=nd.vx;nd.y+=nd.vy;
+    }
+    // edges + pulses
+    const LINK=52*DPR;
+    ctx.lineWidth=DPR;
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i],b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;
+      if(d2<LINK*LINK){const o=(1-Math.sqrt(d2)/LINK)*0.6;ctx.strokeStyle=`rgba(150,190,255,${o})`;
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        if(Math.random()<0.0008)pulses.push({a,b,p:0});}
+    }
+    for(const pu of pulses){pu.p+=0.03;const x=pu.a.x+(pu.b.x-pu.a.x)*pu.p,y=pu.a.y+(pu.b.y-pu.a.y)*pu.p;
+      ctx.fillStyle="rgba(200,225,255,0.95)";ctx.beginPath();ctx.arc(x,y,2*DPR,0,7);ctx.fill();}
+    pulses=pulses.filter(p=>p.p<1);
+    for(const nd of nodes){ctx.fillStyle="rgba(180,210,255,0.95)";ctx.beginPath();ctx.arc(nd.x,nd.y,1.8*DPR,0,7);ctx.fill();}
+  }
+  return {render,reset:()=>ok=false};
+})();
+
+/* ===== 2 · CURRENT — name made of flowing liquid/smoke current ===== */
+const Current=(()=>{
+  let parts=[],ok=false;
+  function build(){
+    const pts=cap(sample(["MUHAMMAD","AHMAD"]), innerWidth<720?2600:5600);
+    parts=pts.map(([tx,ty])=>({tx,ty,x:tx,y:ty,vx:0,vy:0}));
+    ok=true; ctx.fillStyle="#07080b"; ctx.fillRect(0,0,W,H);
+  }
+  function render(t){
+    if(!ok)build();
+    ctx.fillStyle="rgba(7,8,11,0.14)"; ctx.fillRect(0,0,W,H);   // trails
+    ctx.globalCompositeOperation="lighter";
+    const R=130*DPR,R2=R*R,sc=0.004/DPR;
+    for(const p of parts){
+      const a=noise(p.x*sc+t*0.00004,p.y*sc)*Math.PI*6;
+      let ax=Math.cos(a)*0.9*DPR + (p.tx-p.x)*0.035;
+      let ay=Math.sin(a)*0.9*DPR + (p.ty-p.y)*0.035;
+      if(ptr.on){const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=(R-d)/R*4;ax+=dx/d*f;ay+=dy/d*f;}}
+      p.vx=(p.vx+ax)*0.8;p.vy=(p.vy+ay)*0.8;p.x+=p.vx;p.y+=p.vy;
+      ctx.fillStyle="rgba(110,190,235,0.5)"; ctx.fillRect(p.x,p.y,1.5*DPR,1.5*DPR);
+    }
+    ctx.globalCompositeOperation="source-over";
+  }
+  return {render,reset:()=>ok=false};
+})();
+
+/* ===== 3 · MORPH — cycles name -> role -> discipline ===== */
+const Morph=(()=>{
+  let sets=[],parts=[],idx=0,timer=0,ok=false;
+  const SEQ=[["MUHAMMAD","AHMAD"],["ENGINEER"],["BUILDER"],["SYSTEMS"],["INTERFACES"]];
+  function build(){
+    sets=SEQ.map(s=>cap(sample(s),innerWidth<720?2400:4200));
+    const N=Math.max(...sets.map(s=>s.length));
+    parts=Array.from({length:N},(_,i)=>{const p=sets[0][i%sets[0].length];
+      return {x:Math.random()*W,y:Math.random()*H,tx:p[0],ty:p[1],vx:0,vy:0,c:Math.random()};});
+    idx=0;timer=performance.now();ok=true;
+  }
+  function assign(){const s=sets[idx];parts.forEach((p,i)=>{const q=s[i%s.length];p.tx=q[0];p.ty=q[1];});}
+  function render(now){
+    if(!ok)build();
+    if(!REDUCED && now-timer>3400){idx=(idx+1)%sets.length;assign();timer=now;}
+    ctx.fillStyle="#07080b";ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation="lighter";
+    const R=110*DPR,R2=R*R;
+    for(const p of parts){
+      let ax=(p.tx-p.x)*0.045,ay=(p.ty-p.y)*0.045;
+      if(ptr.on){const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=(R-d)/R*5;ax+=dx/d*f;ay+=dy/d*f;}}
+      p.vx=(p.vx+ax)*0.82;p.vy=(p.vy+ay)*0.82;p.x+=p.vx;p.y+=p.vy;
+      const r=150+p.c*90|0; ctx.fillStyle=`rgba(${r},190,255,0.75)`; ctx.fillRect(p.x,p.y,1.6*DPR,1.6*DPR);
+    }
+    ctx.globalCompositeOperation="source-over";
+  }
+  return {render,reset:()=>ok=false};
+})();
+
+/* ===== 4 · REVEAL — name is invisible dust; the cursor is a light that forms it ===== */
+const Reveal=(()=>{
+  let parts=[],ok=false,t0=0;
+  function build(){
+    const pts=cap(sample(["MUHAMMAD","AHMAD"]), innerWidth<720?3000:6500);
+    parts=pts.map(([tx,ty])=>({tx,ty,
+      x:tx+(Math.random()-.5)*40*DPR,y:ty+(Math.random()-.5)*40*DPR,vx:0,vy:0}));
+    ok=true;t0=performance.now();
+  }
+  function render(now){
+    if(!ok)build();
+    const intro=Math.max(0,1-(now-t0)/2600);   // brief full reveal on load, then hides
+    ctx.fillStyle="#07080b";ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation="lighter";
+    const R=150*DPR,R2=R*R;
+    for(const p of parts){
+      const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;
+      const near=ptr.on&&d2<R2 ? (1-Math.sqrt(d2)/R) : 0;
+      const lit=Math.max(near,intro);
+      // when lit, snap to letter; when dark, drift loosely around it
+      const k=0.02+lit*0.12;
+      let ax=(p.tx-p.x)*k,ay=(p.ty-p.y)*k;
+      if(lit<0.15){ax+=(noise(p.x*0.01,p.y*0.01)-0.5)*0.4;ay+=(noise(p.y*0.01,p.x*0.01)-0.5)*0.4;}
+      p.vx=(p.vx+ax)*0.84;p.vy=(p.vy+ay)*0.84;p.x+=p.vx;p.y+=p.vy;
+      const a=0.05+lit*0.9;
+      ctx.fillStyle=`rgba(190,215,255,${a})`; ctx.fillRect(p.x,p.y,1.7*DPR,1.7*DPR);
+    }
+    ctx.globalCompositeOperation="source-over";
+  }
+  return {render,reset:()=>ok=false};
+})();
+
+const R={constellation:Constellation,current:Current,morph:Morph,reveal:Reveal};
+const META={
+  constellation:{a:"#9fc0ff",hint:"cursor bends the network",k:"01 — the fusion",
+    html:"<b>Constellation.</b> Assemble + Signal fused: your name is drawn in particles <i>and</i> wired into a living network with pulses. The system literally spells you."},
+  current:{a:"#6fd0e6",hint:"cursor stirs the flow",k:"02 — liquid name",
+    html:"<b>Current.</b> The letters are made of a flowing curl-noise field — particles stream endlessly through the shape like smoke or water that never settles. Organic and hypnotic."},
+  morph:{a:"#c0a0ff",hint:"watch it cycle · cursor disturbs",k:"03 — shape-shifter",
+    html:"<b>Morph.</b> The same particles cycle through your name → ENGINEER → BUILDER → SYSTEMS → INTERFACES, morphing between each. One hero that says everything you are."},
+  reveal:{a:"#8ad0ff",hint:"move to uncover the name",k:"04 — discovery",
+    html:"<b>Reveal.</b> The name is invisible dust until your cursor passes over it — a light that forms the letters where it touches. Rewards interaction; premium and playful."},
+};
+let current="constellation",raf=0;
+function loop(now){ R[current].render(now); raf=requestAnimationFrame(loop); }
+function size(){ W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR; for(const k in R)R[k].reset(); }
+addEventListener("resize",size);
+function activate(c){
+  current=c;
+  document.querySelectorAll(".rail button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  const m=META[c]; document.documentElement.style.setProperty("--accent",m.a);
+  document.getElementById("caption").innerHTML=`<p class="k">${m.k}</p><p>${m.html}</p>`;
+  document.getElementById("hint").textContent=m.hint;
+  R[c].reset();
+  cancelAnimationFrame(raf);
+  if(REDUCED){ R[c].render(performance.now()); } else raf=requestAnimationFrame(loop);
+}
+size();
+document.querySelectorAll(".rail button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.c)));
+addEventListener("keydown",e=>{const map={"1":"constellation","2":"current","3":"morph","4":"reveal"};if(map[e.key])activate(map[e.key]);});
+activate("constellation");
+</script>

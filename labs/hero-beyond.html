@@ -1,0 +1,238 @@
+<title>Hero Lab · Beyond</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#07080b;--fg:#eef0f4;--fg-dim:#8b909c;--fg-faint:#565b67;--line:rgba(255,255,255,.10);
+    --glass:rgba(14,16,22,.6);--accent:#9fc0ff;--mono:"JetBrains Mono",ui-monospace,monospace;
+    --body:"Familjen Grotesk",system-ui,sans-serif;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;background:radial-gradient(130% 110% at 55% 30%,#0e1119,#07080b 72%)}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .5s}
+  canvas.on{opacity:1}
+  #scrim{position:absolute;inset:0;pointer-events:none;z-index:6;
+    background:linear-gradient(90deg,rgba(7,8,11,.82) 0%,rgba(7,8,11,.4) 30%,transparent 58%),linear-gradient(0deg,rgba(7,8,11,.7),transparent 26%)}
+  #loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--fg-faint);font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;z-index:7}
+  .content{position:relative;z-index:8;height:100%;display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(24px,7vw,110px);max-width:1100px;pointer-events:none}
+  .content *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--fg-dim);
+    display:flex;align-items:center;gap:12px;margin:0 0 22px}
+  .eyebrow::before{content:"";width:32px;height:1px;background:var(--fg-faint)}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.7rem,7.5vw,6.2rem);line-height:.95;letter-spacing:-.03em;margin:0;text-wrap:balance;max-width:15ch}
+  .sub{font-size:clamp(1rem,1.6vw,1.25rem);line-height:1.5;color:var(--fg-dim);max-width:42ch;margin:24px 0 0}
+  .rail{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:40;display:flex;gap:5px;padding:5px;border-radius:100px;
+    border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+  .rail button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 15px;border-radius:100px;border:0;cursor:pointer;
+    background:transparent;color:var(--fg-dim);transition:.2s;display:flex;align-items:baseline;gap:8px}
+  .rail button .n{font-size:10px;color:var(--fg-faint)}
+  .rail button:hover{color:var(--fg)}
+  .rail button[aria-pressed="true"]{background:rgba(255,255,255,.10);color:var(--fg)}
+  .rail button:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+  .caption{position:fixed;left:clamp(24px,7vw,110px);bottom:clamp(20px,4vh,40px);z-index:40;max-width:min(560px,80vw)}
+  .caption .k{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin:0 0 7px}
+  .caption p{margin:0;font-size:13.5px;line-height:1.5;color:var(--fg-dim)}
+  .caption p b{color:var(--fg);font-weight:500}
+  .hint{position:fixed;right:clamp(24px,7vw,110px);bottom:clamp(20px,4vh,40px);z-index:40;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--fg-faint);text-align:right}
+  @media (max-width:720px){.rail button .lbl{display:none}.hint{display:none}}
+</style>
+
+<div id="stage">
+  <canvas id="glc"></canvas>
+  <canvas id="threec"></canvas>
+  <canvas id="mtc"></canvas>
+  <div id="scrim"></div>
+  <div id="loading">loading…</div>
+  <div class="content">
+    <p class="eyebrow">Muhammad Ahmad</p>
+    <h1 id="head">Engineer &amp; builder.</h1>
+    <p class="sub" id="sub">Four heroes, four completely different engines.</p>
+  </div>
+</div>
+
+<nav class="rail" aria-label="Concept">
+  <button data-c="raymarch" aria-pressed="true"><span class="n">1</span><span class="lbl">Raymarch</span></button>
+  <button data-c="liquid" aria-pressed="false"><span class="n">2</span><span class="lbl">Liquid</span></button>
+  <button data-c="diorama" aria-pressed="false"><span class="n">3</span><span class="lbl">Pan</span></button>
+  <button data-c="physics" aria-pressed="false"><span class="n">4</span><span class="lbl">Physics</span></button>
+</nav>
+<div class="caption" id="caption" aria-live="polite"></div>
+<div class="hint" id="hint"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,REDUCED?1:1.5);
+const glc=document.getElementById("glc"),threec=document.getElementById("threec"),mtc=document.getElementById("mtc");
+const mouse={px:innerWidth/2,py:innerHeight/2,on:0};
+addEventListener("pointermove",e=>{mouse.px=e.clientX;mouse.py=e.clientY;mouse.on=1;});
+
+const META={
+  raymarch:{a:"#8fe0d6",head:"Made of math.",sub:"A gyroid lattice raymarched live in a single fragment shader — no geometry, no model, just an equation. Cursor steers the flight.",hint:"cursor steers",k:"01 — raymarched SDF · pure shader"},
+  liquid:{a:"#a0c4ff",head:"Liquid metal.",sub:"Screen-space metaballs that merge and split as they chase the cursor, shaded like chrome with an iridescent skin.",hint:"drag the goo",k:"02 — metaballs · screen-space field"},
+  diorama:{a:"#c0a8ff",head:"A world to pan.",sub:"A 3D diorama you glide the camera across by scrolling or dragging — the parallax does the storytelling.",hint:"scroll / drag to pan",k:"03 — scroll-driven camera pan · three.js"},
+  physics:{a:"#ffbf87",head:"Throw it around.",sub:"A real rigid-body physics playground — grab the shapes, fling them, watch them settle. Pure play.",hint:"grab & fling",k:"04 — rigid-body physics · matter.js"},
+};
+
+/* ============ raw-WebGL shaders (raymarch + liquid share one context) ============ */
+const Shaders=(()=>{
+  const gl=glc.getContext("webgl2",{antialias:false});
+  if(!gl) return null;
+  const VS=`#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+  const RAY=`#version 300 es
+  precision highp float; uniform vec2 uRes; uniform float uTime; uniform vec2 uMouse; out vec4 o;
+  mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+  float map(vec3 p){ p.xy*=rot(p.z*0.05); float g=dot(sin(p),cos(p.yzx)); return (abs(g)-0.55)*0.33; }
+  vec3 nrm(vec3 p){vec2 e=vec2(0.0025,0.);return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));}
+  void main(){
+    vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uRes.y;
+    vec2 m=(uMouse/uRes-0.5);
+    vec3 ro=vec3(0.,0.,uTime*0.75);
+    vec3 rd=normalize(vec3(uv,1.2)); rd.xy*=rot(m.x*0.7); rd.yz*=rot(-m.y*0.55);
+    float t=0.,d;
+    for(int i=0;i<72;i++){vec3 p=ro+rd*t;d=map(p);if(d<0.001||t>20.)break;t+=d*0.8;}
+    vec3 col=vec3(0.02,0.03,0.05);
+    if(t<20.){vec3 p=ro+rd*t,n=nrm(p);
+      float fres=pow(1.-max(dot(n,-rd),0.),3.);
+      vec3 base=0.5+0.5*cos(6.283*(n.y*0.5+vec3(0.,0.33,0.67))+uTime*0.15);
+      float diff=max(dot(n,normalize(vec3(1,2,-1))),0.);
+      col=base*0.35+diff*0.5+fres*vec3(0.7,0.85,1.); col*=exp(-t*0.075);}
+    o=vec4(pow(col,vec3(0.9)),1.);
+  }`;
+  const LIQ=`#version 300 es
+  precision highp float; uniform vec2 uRes; uniform float uTime; uniform vec2 uBlobs[8]; uniform int uCount; out vec4 o;
+  float field(vec2 uv){ float s=0.;
+    for(int i=0;i<8;i++){ if(i>=uCount)break; vec2 d=uv-uBlobs[i]; s+=0.03/(dot(d,d)+0.0009); }
+    for(int i=0;i<3;i++){ float f=float(i); vec2 c=vec2(sin(uTime*0.3+f*2.1)*0.55,cos(uTime*0.23+f*1.7)*0.32);
+      vec2 d=uv-c; s+=0.022/(dot(d,d)+0.0014); } return s; }
+  void main(){ vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uRes.y; float f=field(uv); float e=0.0022;
+    vec2 g=vec2(field(uv+vec2(e,0.))-field(uv-vec2(e,0.)),field(uv+vec2(0.,e))-field(uv-vec2(0.,e)));
+    vec3 col=vec3(0.02,0.03,0.05); float edge=smoothstep(0.92,1.12,f);
+    if(f>0.9){ vec3 n=normalize(vec3(-g*1.4,0.6)); float fres=pow(1.-n.z,2.4);
+      vec3 irid=0.5+0.5*cos(6.283*(f*0.35+vec3(0.,0.33,0.67)));
+      float diff=max(dot(n,normalize(vec3(0.5,0.8,0.6))),0.);
+      col=mix(col, irid*0.45+diff*0.6+fres*vec3(0.85,0.92,1.), edge); }
+    o=vec4(col,1.); }`;
+  function mk(fs){const pr=gl.createProgram();
+    const v=gl.createShader(gl.VERTEX_SHADER);gl.shaderSource(v,VS);gl.compileShader(v);gl.attachShader(pr,v);
+    const f=gl.createShader(gl.FRAGMENT_SHADER);gl.shaderSource(f,fs);gl.compileShader(f);gl.attachShader(pr,f);
+    gl.linkProgram(pr);return pr;}
+  const pRay=mk(RAY),pLiq=mk(LIQ);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  [pRay,pLiq].forEach(pr=>{gl.useProgram(pr);const l=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);});
+  const U=(pr)=>({res:gl.getUniformLocation(pr,"uRes"),time:gl.getUniformLocation(pr,"uTime"),
+    mouse:gl.getUniformLocation(pr,"uMouse"),blobs:gl.getUniformLocation(pr,"uBlobs"),count:gl.getUniformLocation(pr,"uCount")});
+  const uRay=U(pRay),uLiq=U(pLiq);
+  const trail=[]; // liquid blob trail in uv space
+  function size(){glc.width=innerWidth*DPR;glc.height=innerHeight*DPR;gl.viewport(0,0,glc.width,glc.height);}
+  function toUV(px,py){return [(px*DPR-0.5*glc.width)/glc.height, ((innerHeight-py)*DPR-0.5*glc.height)/glc.height];}
+  function renderRay(t){gl.useProgram(pRay);gl.uniform2f(uRay.res,glc.width,glc.height);
+    gl.uniform1f(uRay.time,t);gl.uniform2f(uRay.mouse,mouse.px*DPR,(innerHeight-mouse.py)*DPR);gl.drawArrays(gl.TRIANGLES,0,3);}
+  function renderLiq(t){
+    const uv=toUV(mouse.px,mouse.py); trail.unshift(uv); if(trail.length>6)trail.pop();
+    const flat=new Float32Array(16); const n=Math.max(trail.length,1);
+    for(let i=0;i<6;i++){const p=trail[Math.min(i,trail.length-1)]||[0,0];flat[i*2]=p[0];flat[i*2+1]=p[1];}
+    gl.useProgram(pLiq);gl.uniform2f(uLiq.res,glc.width,glc.height);gl.uniform1f(uLiq.time,t);
+    gl.uniform2fv(uLiq.blobs,flat);gl.uniform1i(uLiq.count,6);gl.drawArrays(gl.TRIANGLES,0,3);}
+  size();
+  return {size,renderRay,renderLiq};
+})();
+
+/* ============ diorama (three.js scroll-pan) ============ */
+let renderer,Diorama;
+function buildDiorama(){
+  renderer=new THREE.WebGLRenderer({canvas:threec,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(DPR,1.4));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.outputEncoding=THREE.sRGBEncoding;
+  // env
+  const cvs=document.createElement("canvas");cvs.width=256;cvs.height=128;const g=cvs.getContext("2d");
+  const grd=g.createLinearGradient(0,0,0,128);grd.addColorStop(0,"#2a3350");grd.addColorStop(1,"#06070b");g.fillStyle=grd;g.fillRect(0,0,256,128);
+  for(const[x,y,c,r] of[[60,40,"#a8c0ff",50],[200,30,"#ffb0d8",40]]){const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,c);rg.addColorStop(1,"transparent");g.fillStyle=rg;g.fillRect(0,0,256,128);}
+  const tex=new THREE.CanvasTexture(cvs);tex.mapping=THREE.EquirectangularReflectionMapping;
+  const pm=new THREE.PMREMGenerator(renderer);const env=pm.fromEquirectangular(tex).texture;pm.dispose();
+  const scene=new THREE.Scene();scene.environment=env;scene.fog=new THREE.FogExp2(0x07080b,0.03);
+  const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,120);camera.position.set(0,0,10);
+  scene.add(new THREE.HemisphereLight(0xbcd0ff,0x07080b,.7));
+  const key=new THREE.DirectionalLight(0xffffff,1.1);key.position.set(4,6,6);scene.add(key);
+  const glass=new THREE.MeshPhysicalMaterial({transmission:1,thickness:1.4,ior:1.45,roughness:.05,iridescence:1,envMapIntensity:1.2,color:0xffffff});
+  const chrome=new THREE.MeshStandardMaterial({color:0xccd6ea,metalness:1,roughness:.16,envMapIntensity:1.3});
+  const tint=new THREE.MeshStandardMaterial({color:0x6e86ff,metalness:.4,roughness:.3});
+  const geos=[new THREE.IcosahedronGeometry(1,0),new THREE.TorusGeometry(.8,.3,16,40),new THREE.ConeGeometry(1,1.8,4),new THREE.BoxGeometry(1.3,1.3,1.3),new THREE.OctahedronGeometry(1,0)];
+  const objs=[];
+  for(let i=0;i<26;i++){const m=[glass,chrome,tint,glass][i%4];
+    const o=new THREE.Mesh(geos[i%geos.length],m);const s=.6+Math.random()*1.3;o.scale.setScalar(s);
+    o.position.set((i-13)*3.2+(Math.random()-.5)*2,(Math.random()-.5)*5,-2-Math.random()*10);
+    o.rotation.set(Math.random(),Math.random(),Math.random());
+    o.userData={rx:(Math.random()-.5)*.006,ry:(Math.random()-.5)*.006};scene.add(o);objs.push(o);}
+  let panX=0,target=0;
+  const clamp=v=>Math.max(-38,Math.min(38,v));
+  addEventListener("wheel",e=>{if(current==="diorama"){target=clamp(target+e.deltaY*0.02);}},{passive:true});
+  let drag=false,lastX=0;
+  addEventListener("pointerdown",e=>{if(current==="diorama"){drag=true;lastX=e.clientX;}});
+  addEventListener("pointerup",()=>drag=false);
+  addEventListener("pointermove",e=>{if(drag&&current==="diorama"){target=clamp(target-(e.clientX-lastX)*0.03);lastX=e.clientX;}});
+  Diorama={scene,camera,size:()=>{renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();},
+    render:()=>{panX+=(target-panX)*0.06;camera.position.x=panX;camera.position.y=Math.sin(panX*0.1)*0.6;
+      camera.lookAt(panX+4,0,-4);objs.forEach(o=>{o.rotation.x+=o.userData.rx;o.rotation.y+=o.userData.ry;});
+      renderer.render(scene,camera);}};
+  Diorama.size();
+}
+
+/* ============ physics (matter.js) ============ */
+let Physics=null;
+function buildPhysics(){
+  const {Engine,Render,Runner,World,Bodies,Mouse,MouseConstraint}=Matter;
+  const engine=Engine.create();engine.gravity.y=1;
+  const render=Render.create({canvas:mtc,engine,options:{width:innerWidth,height:innerHeight,background:"transparent",wireframes:false,pixelRatio:1}});
+  const w=innerWidth,h=innerHeight,opt={isStatic:true,render:{fillStyle:"transparent"}};
+  World.add(engine.world,[Bodies.rectangle(w/2,h+40,w*2,80,opt),Bodies.rectangle(-40,h/2,80,h*2,opt),Bodies.rectangle(w+40,h/2,80,h*2,opt)]);
+  const cols=["#6e86ff","#8fe0d6","#c0a8ff","#ffbf87","#eef0f4","#5aa0ff"];
+  function drop(){const bodies=[];
+    for(let i=0;i<26;i++){const x=w*0.35+Math.random()*w*0.5,y=-Math.random()*400,c=cols[i%cols.length];
+      const r={fillStyle:c,strokeStyle:"rgba(255,255,255,.15)",lineWidth:1};const t=i%4,s=26+Math.random()*34;
+      let b; if(t===0)b=Bodies.circle(x,y,s*0.6,{restitution:.5,render:r});
+      else if(t===1)b=Bodies.rectangle(x,y,s*1.6,s*0.7,{chamfer:{radius:8},restitution:.5,render:r});
+      else if(t===2)b=Bodies.polygon(x,y,3,s,{restitution:.55,render:r});
+      else b=Bodies.polygon(x,y,6,s*0.8,{restitution:.5,render:r});
+      bodies.push(b);}
+    World.add(engine.world,bodies);return bodies;}
+  let bodies=drop();
+  const mouse=Mouse.create(render.canvas);
+  const mc=MouseConstraint.create(engine,{mouse,constraint:{stiffness:.2,render:{visible:false}}});
+  World.add(engine.world,mc);
+  const runner=Runner.create();
+  Physics={render,runner,engine,start:()=>{Render.run(render);Runner.run(runner,engine);},
+    stop:()=>{Render.stop(render);Runner.stop(runner);},
+    size:()=>{render.canvas.width=innerWidth;render.canvas.height=innerHeight;render.options.width=innerWidth;render.options.height=innerHeight;}};
+}
+
+/* ============ controller ============ */
+let current="raymarch",raf=0;
+function loop(now){const t=now/1000;
+  if(current==="raymarch")Shaders&&Shaders.renderRay(t);
+  else if(current==="liquid")Shaders&&Shaders.renderLiq(t);
+  else if(current==="diorama")Diorama&&Diorama.render();
+  raf=requestAnimationFrame(loop);}
+function show(el){[glc,threec,mtc].forEach(c=>c.classList.toggle("on",c===el));}
+function activate(c){
+  if(Physics&&current==="physics"&&c!=="physics")Physics.stop();
+  current=c;
+  document.querySelectorAll(".rail button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  const m=META[c];document.documentElement.style.setProperty("--accent",m.a);
+  document.getElementById("head").textContent=m.head;document.getElementById("sub").textContent=m.sub;
+  document.getElementById("caption").innerHTML=`<p class="k">${m.k}</p><p>${m.sub}</p>`;
+  document.getElementById("hint").textContent=m.hint;
+  cancelAnimationFrame(raf);
+  if(c==="raymarch"||c==="liquid"){Shaders&&Shaders.size();show(glc);if(!REDUCED)raf=requestAnimationFrame(loop);else Shaders&&(c==="raymarch"?Shaders.renderRay(2):Shaders.renderLiq(2));}
+  else if(c==="diorama"){if(!Diorama)buildDiorama();Diorama.size();show(threec);raf=requestAnimationFrame(loop);}
+  else if(c==="physics"){if(!Physics)buildPhysics();Physics.size();show(mtc);Physics.start();}
+}
+addEventListener("resize",()=>{Shaders&&Shaders.size();Diorama&&Diorama.size();Physics&&Physics.size();});
+document.getElementById("loading").style.display="none";
+document.querySelectorAll(".rail button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.c)));
+addEventListener("keydown",e=>{const map={"1":"raymarch","2":"liquid","3":"diorama","4":"physics"};if(map[e.key])activate(map[e.key]);});
+activate("raymarch");
+</script>

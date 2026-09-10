@@ -1,0 +1,52 @@
+<title>Physics · Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#07080b;--fg:#eef0f4;--fg-dim:#9095a1;--fg-faint:#565b67;--line:rgba(255,255,255,.13);
+    --mono:"JetBrains Mono",ui-monospace,monospace;--body:"Familjen Grotesk",system-ui,sans-serif;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:radial-gradient(120% 100% at 50% 20%,#0e1119,#07080b 72%);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:2}
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--fg-dim);text-decoration:none}.nav a:hover{color:var(--fg)}
+  .hero{position:fixed;left:0;right:0;top:16%;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px;pointer-events:none}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 16px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.7rem,8vw,6.4rem);line-height:.94;letter-spacing:-.03em;margin:0}
+  .sub{font-size:clamp(1rem,1.7vw,1.26rem);line-height:1.5;color:var(--fg-dim);max-width:38ch;margin:20px 0 0}
+  .tag{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:10;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--fg-faint)}
+  @media (max-width:720px){.nav{display:none}.hero{top:12%}}
+</style>
+<canvas id="c"></canvas>
+<div class="mark">MUHAMMAD&nbsp;AHMAD</div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+<div class="hero"><p class="eyebrow">Engineer · Builder</p>
+  <h1>Throw it around.</h1>
+  <p class="sub">A real rigid-body playground — grab the shapes, fling them, watch them settle.</p></div>
+<div class="tag">RIGID-BODY PHYSICS · MATTER.JS · GRAB &amp; FLING</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+const {Engine,Render,Runner,World,Bodies,Mouse,MouseConstraint,Composite}=Matter;
+const cv=document.getElementById("c");
+const engine=Engine.create();engine.gravity.y=1;
+const render=Render.create({canvas:cv,engine,options:{width:innerWidth,height:innerHeight,background:"transparent",wireframes:false,pixelRatio:1}});
+function walls(){const w=innerWidth,h=innerHeight,o={isStatic:true,render:{fillStyle:"transparent"}};
+  return [Bodies.rectangle(w/2,h+40,w*2,80,o),Bodies.rectangle(-40,h/2,80,h*3,o),Bodies.rectangle(w+40,h/2,80,h*3,o)];}
+let staticBodies=walls();World.add(engine.world,staticBodies);
+const cols=["#6e86ff","#8fe0d6","#c0a8ff","#ffbf87","#eef0f4","#5aa0ff","#ff8fb0"];
+function drop(){const w=innerWidth,bodies=[];
+  for(let i=0;i<28;i++){const px=w*0.28+Math.random()*w*0.44,py=-Math.random()*500,c=cols[i%cols.length];
+    const r={fillStyle:c,strokeStyle:"rgba(255,255,255,.16)",lineWidth:1},t=i%4,s=26+Math.random()*36;let b;
+    if(t===0)b=Bodies.circle(px,py,s*0.6,{restitution:.55,friction:.05,render:r});
+    else if(t===1)b=Bodies.rectangle(px,py,s*1.7,s*0.72,{chamfer:{radius:9},restitution:.5,render:r});
+    else if(t===2)b=Bodies.polygon(px,py,3,s,{restitution:.6,render:r});
+    else b=Bodies.polygon(px,py,6,s*0.82,{restitution:.5,render:r});
+    bodies.push(b);}World.add(engine.world,bodies);return bodies;}
+drop();
+const mouse=Mouse.create(render.canvas);
+const mc=MouseConstraint.create(engine,{mouse,constraint:{stiffness:.2,render:{visible:false}}});
+World.add(engine.world,mc);
+Render.run(render);const runner=Runner.create();Runner.run(runner,engine);
+addEventListener("resize",()=>{render.canvas.width=innerWidth;render.canvas.height=innerHeight;render.options.width=innerWidth;render.options.height=innerHeight;
+  Composite.remove(engine.world,staticBodies);staticBodies=walls();World.add(engine.world,staticBodies);});
+</script>

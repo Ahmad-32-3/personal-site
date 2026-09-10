@@ -1,0 +1,61 @@
+<title>Kinetic · Type</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200;12..96,400;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#0a0a0c;--fg:#f4f4f6;--fg-dim:#8b8b95;--fg-faint:#55555f;--line:rgba(255,255,255,.14);
+    --mono:"JetBrains Mono",ui-monospace,monospace;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--mono);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #grain{position:fixed;inset:0;pointer-events:none;opacity:.04;z-index:1;
+    background-image:radial-gradient(circle,#fff 0.5px,transparent 0.5px);background-size:3px 3px}
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;font-size:12px}
+  .nav a{color:var(--fg-dim);text-decoration:none}.nav a:hover{color:var(--fg)}
+  .wrap{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:5;user-select:none}
+  .line{font-family:var(--display);font-weight:800;line-height:.82;letter-spacing:-.02em;white-space:nowrap;display:flex}
+  .line span{display:inline-block;will-change:transform,font-variation-settings;font-size:clamp(2.6rem,13vw,11rem)}
+  .line span.sp{width:.28em}
+  .eyebrow{font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:24px}
+  .sub{margin-top:30px;font-family:var(--mono);font-size:clamp(.9rem,1.5vw,1.05rem);color:var(--fg-dim);letter-spacing:.02em;max-width:40ch;text-align:center;line-height:1.6}
+  .tag{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:10;font-size:11px;letter-spacing:.16em;color:var(--fg-faint)}
+  @media (max-width:720px){.nav{display:none}}
+</style>
+<div id="grain"></div>
+<div class="mark">MUHAMMAD&nbsp;AHMAD</div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+<div class="wrap">
+  <div class="eyebrow">Engineer · Builder</div>
+  <div class="line" data-t="MUHAMMAD"></div>
+  <div class="line" data-t="AHMAD"></div>
+  <p class="sub">Move across the letters — the type reacts, thickening and parting under the cursor.</p>
+</div>
+<div class="tag">KINETIC TYPOGRAPHY · VARIABLE FONT · PER-LETTER PHYSICS</div>
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const letters=[];
+document.querySelectorAll(".line").forEach(line=>{
+  for(const ch of line.dataset.t){const s=document.createElement("span");
+    if(ch===" "){s.className="sp";}else{s.textContent=ch;s.style.fontVariationSettings='"wght" 400';letters.push(s);}
+    line.appendChild(s);}
+});
+const m={x:-9999,y:-9999};
+addEventListener("pointermove",e=>{m.x=e.clientX;m.y=e.clientY;});
+addEventListener("pointerleave",()=>{m.x=-9999;m.y=-9999;});
+const st=letters.map(()=>({tx:0,ty:0,w:400,x:0,y:0,cw:400}));
+function frame(t){
+  const R=220;
+  letters.forEach((el,i)=>{
+    const r=el.getBoundingClientRect(),lx=r.left+r.width/2,ly=r.top+r.height/2;
+    const dx=lx-m.x,dy=ly-m.y,d=Math.hypot(dx,dy);
+    const s=st[i];
+    if(d<R){const f=(1-d/R);s.tx=dx/(d||1)*f*46;s.ty=dy/(d||1)*f*46;s.w=400+f*440;}
+    else{s.tx=0;s.ty=0;s.w=400;}
+    const wave=RM?0:Math.sin(t*0.0015+i*0.5)*5;
+    s.x+=(s.tx-s.x)*.12;s.y+=((s.ty+wave)-s.y)*.12;s.cw+=(s.w-s.cw)*.14;
+    el.style.transform=`translate(${s.x.toFixed(2)}px,${s.y.toFixed(2)}px)`;
+    el.style.fontVariationSettings='"wght" '+(s.cw|0);
+  });
+  requestAnimationFrame(frame);
+}
+if(!RM)requestAnimationFrame(frame);
+</script>

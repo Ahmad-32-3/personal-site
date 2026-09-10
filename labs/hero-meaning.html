@@ -1,0 +1,308 @@
+<title>Hero Lab · Meaning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --ink:#07080b;--fg:#eef0f4;--fg-dim:#8b909c;--fg-faint:#565b67;
+    --line:rgba(255,255,255,.10);--glass:rgba(14,16,22,.6);--accent-a:#9fc0ff;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --body:"Familjen Grotesk",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;overflow:hidden;background:radial-gradient(130% 100% at 60% 20%,#0e1119,#07080b 72%)}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #scrim{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(0deg,rgba(7,8,11,.7) 0%,transparent 26%),linear-gradient(180deg,rgba(7,8,11,.55) 0%,transparent 22%)}
+  #loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--fg-faint);font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase}
+
+  .mark{position:fixed;top:24px;left:clamp(24px,6vw,64px);z-index:30;font-family:var(--mono);font-size:12px;
+    letter-spacing:.16em;color:var(--fg-dim);line-height:1.8}
+  .mark b{color:var(--fg);font-weight:500}
+  .mark span{color:var(--fg-faint)}
+
+  .rail{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:40;display:flex;gap:5px;padding:5px;
+    border-radius:100px;border:1px solid var(--line);background:var(--glass);
+    backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+  .rail button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 15px;border-radius:100px;
+    border:0;cursor:pointer;background:transparent;color:var(--fg-dim);transition:.2s;display:flex;align-items:baseline;gap:8px}
+  .rail button .n{font-size:10px;color:var(--fg-faint)}
+  .rail button:hover{color:var(--fg)}
+  .rail button[aria-pressed="true"]{background:rgba(255,255,255,.10);color:var(--fg)}
+  .rail button:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+
+  .caption{position:fixed;left:clamp(24px,6vw,64px);bottom:clamp(20px,4vh,40px);z-index:40;max-width:min(560px,80vw)}
+  .caption .k{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-a);margin:0 0 7px}
+  .caption p{margin:0;font-size:13.5px;line-height:1.5;color:var(--fg-dim)}
+  .caption p b{color:var(--fg);font-weight:500}
+  .hint{position:fixed;right:clamp(24px,6vw,64px);bottom:clamp(20px,4vh,40px);z-index:40;font-family:var(--mono);
+    font-size:11px;letter-spacing:.1em;color:var(--fg-faint);text-align:right;line-height:1.7}
+  @media (max-width:720px){.rail button .lbl{display:none}.hint{display:none}}
+</style>
+
+<div id="stage">
+  <canvas id="c2"></canvas>          <!-- canvas2D concepts -->
+  <canvas id="gl"></canvas>          <!-- three.js concepts -->
+  <div id="scrim"></div>
+  <div id="loading">loading…</div>
+</div>
+
+<div class="mark"><b>Muhammad Ahmad</b><br><span>Engineer · builder</span></div>
+
+<nav class="rail" aria-label="Hero concept">
+  <button data-c="assemble" aria-pressed="true"><span class="n">1</span><span class="lbl">Assemble</span></button>
+  <button data-c="signal"   aria-pressed="false"><span class="n">2</span><span class="lbl">Signal</span></button>
+  <button data-c="keys"     aria-pressed="false"><span class="n">3</span><span class="lbl">Keys</span></button>
+  <button data-c="words"    aria-pressed="false"><span class="n">4</span><span class="lbl">Words</span></button>
+</nav>
+
+<div class="caption" id="caption" aria-live="polite"></div>
+<div class="hint" id="hint">move the cursor</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,REDUCED?1:1.5);
+const c2=document.getElementById("c2"), gl=document.getElementById("gl");
+const ptr={x:.5,y:.5,px:0,py:0,on:0};
+addEventListener("pointermove",e=>{ptr.x=e.clientX/innerWidth;ptr.y=e.clientY/innerHeight;ptr.px=e.clientX;ptr.py=e.clientY;ptr.on=1;});
+
+const NAME_A="MUHAMMAD", NAME_B="AHMAD";
+const META={
+  assemble:{a:"#9fc0ff",hint:"move to disturb",k:"01 — your name, as particles",
+    html:"<b>Assemble.</b> ~5,000 particles fly in and lock into your name, then scatter and reform around the cursor. Meaningful and instantly impressive — the classic attention-grabber."},
+  signal:{a:"#6fe3d0",hint:"cursor pulls the network",k:"02 — a living system",
+    html:"<b>Signal.</b> A live graph — nodes, wires, and data pulses traveling between them. Says \"I build systems\" with zero copy. Cursor bends the network toward it."},
+  keys:{a:"#ffb27d",hint:"hover the keys",k:"03 — mechanical keyboard",
+    html:"<b>Keys.</b> Your name as pressable 3D keycaps with an idle typing-wave. Dev-culture, tactile, playful. Hover to press a key."},
+  words:{a:"#b8a0ff",hint:"cursor steers the flight",k:"04 — flight through what you do",
+    html:"<b>Words.</b> The immersive tunnel you liked — rebuilt from the things you make: SYSTEMS, INTERFACES, TOOLS. You fly through your own practice."},
+};
+
+/* ============ 1 · ASSEMBLE (canvas2D) ============ */
+const Assemble=(()=>{
+  const ctx=c2.getContext("2d"); let W,H,parts=[],started=false;
+  function targets(){
+    const off=document.createElement("canvas"); off.width=innerWidth; off.height=innerHeight;
+    const g=off.getContext("2d"); g.fillStyle="#fff"; g.textAlign="center"; g.textBaseline="middle";
+    const fs=Math.min(innerWidth*0.15,190); g.font=`800 ${fs}px "Bricolage Grotesque",sans-serif`;
+    g.fillText(NAME_A,innerWidth/2,innerHeight/2-fs*0.42);
+    g.fillText(NAME_B,innerWidth/2,innerHeight/2+fs*0.5);
+    const img=g.getImageData(0,0,innerWidth,innerHeight).data;
+    const step=innerWidth<720?6:5, pts=[];
+    for(let y=0;y<innerHeight;y+=step) for(let x=0;x<innerWidth;x+=step)
+      if(img[(y*innerWidth+x)*4+3]>128) pts.push([x,y]);
+    const MAX=innerWidth<720?2600:5200; let stride=Math.max(1,Math.ceil(pts.length/MAX)), out=[];
+    for(let i=0;i<pts.length;i+=stride) out.push(pts[i]);
+    return out;
+  }
+  function build(){
+    W=c2.width=innerWidth*DPR; H=c2.height=innerHeight*DPR;
+    const pts=targets();
+    parts=pts.map(([tx,ty])=>({tx:tx*DPR,ty:ty*DPR,x:Math.random()*W,y:Math.random()*H,vx:0,vy:0,
+      c:tx/innerWidth}));
+    started=true;
+  }
+  function render(){
+    if(!started)build();
+    ctx.fillStyle="#07080b"; ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation="lighter";
+    const mx=ptr.px*DPR,my=ptr.py*DPR,R=110*DPR,R2=R*R;
+    for(const p of parts){
+      let ax=(p.tx-p.x)*0.02, ay=(p.ty-p.y)*0.02;
+      if(ptr.on){ const dx=p.x-mx,dy=p.y-my,d2=dx*dx+dy*dy;
+        if(d2<R2){ const d=Math.sqrt(d2)||1,f=(R-d)/R*5; ax+=dx/d*f; ay+=dy/d*f; } }
+      p.vx=(p.vx+ax)*0.86; p.vy=(p.vy+ay)*0.86; p.x+=p.vx; p.y+=p.vy;
+      const t=p.c; const r=120+t*120|0, gg=160+t*40|0, b=255-t*60|0;
+      ctx.fillStyle=`rgba(${r},${gg},${b},0.9)`;
+      ctx.fillRect(p.x,p.y,1.7*DPR,1.7*DPR);
+    }
+    ctx.globalCompositeOperation="source-over";
+  }
+  return {render, resize:()=>{if(started)build();}, reset:()=>{started=false;}, dom:c2};
+})();
+
+/* ============ 2 · SIGNAL (canvas2D network) ============ */
+const Signal=(()=>{
+  const ctx=c2.getContext("2d"); let W,H,nodes=[],pulses=[],started=false;
+  function build(){
+    W=c2.width=innerWidth*DPR; H=c2.height=innerHeight*DPR;
+    const n=innerWidth<720?46:88;
+    nodes=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.25*DPR,vy:(Math.random()-.5)*.25*DPR,r:(Math.random()*1.6+1)*DPR}));
+    pulses=[]; started=true;
+  }
+  function render(t){
+    if(!started)build();
+    ctx.fillStyle="#07080b"; ctx.fillRect(0,0,W,H);
+    const mx=ptr.px*DPR,my=ptr.py*DPR, LINK=140*DPR;
+    for(const nd of nodes){
+      nd.x+=nd.vx; nd.y+=nd.vy;
+      if(nd.x<0||nd.x>W)nd.vx*=-1; if(nd.y<0||nd.y>H)nd.vy*=-1;
+      if(ptr.on){ const dx=mx-nd.x,dy=my-nd.y,d=Math.hypot(dx,dy);
+        if(d<220*DPR){ nd.x+=dx/d*0.6; nd.y+=dy/d*0.6; } }
+    }
+    // edges
+    ctx.lineWidth=DPR;
+    for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i],b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy);
+      if(d<LINK){ const o=(1-d/LINK)*0.5; ctx.strokeStyle=`rgba(90,200,190,${o})`;
+        ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        if(Math.random()<0.0006) pulses.push({a,b,p:0}); }
+    }
+    // pulses
+    for(const pu of pulses){ pu.p+=0.02; const x=pu.a.x+(pu.b.x-pu.a.x)*pu.p,y=pu.a.y+(pu.b.y-pu.a.y)*pu.p;
+      ctx.fillStyle="rgba(150,255,235,0.95)"; ctx.beginPath();ctx.arc(x,y,2.4*DPR,0,7);ctx.fill(); }
+    pulses=pulses.filter(p=>p.p<1);
+    // nodes
+    for(const nd of nodes){ ctx.fillStyle="rgba(120,230,215,0.95)";
+      ctx.beginPath();ctx.arc(nd.x,nd.y,nd.r,0,7);ctx.fill(); }
+  }
+  return {render, resize:()=>{if(started)build();}, reset:()=>{started=false;}, dom:c2};
+})();
+
+/* ============ three.js shared ============ */
+let renderer,ENV;
+function initGL(){
+  if(renderer)return;
+  renderer=new THREE.WebGLRenderer({canvas:gl,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(DPR,1.4));
+  renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  const cv=document.createElement("canvas");cv.width=512;cv.height=256;const g=cv.getContext("2d");
+  const grd=g.createLinearGradient(0,0,0,256);grd.addColorStop(0,"#222a40");grd.addColorStop(1,"#05060a");
+  g.fillStyle=grd;g.fillRect(0,0,512,256);
+  for(const[x,y,col,r] of [[120,70,"#9fb8ff",90],[380,60,"#ffb0d4",70],[260,180,"#8affe6",80]]){
+    const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,col);rg.addColorStop(1,"transparent");g.fillStyle=rg;g.fillRect(0,0,512,256);}
+  const tex=new THREE.CanvasTexture(cv);tex.mapping=THREE.EquirectangularReflectionMapping;
+  const pm=new THREE.PMREMGenerator(renderer);ENV=pm.fromEquirectangular(tex).texture;tex.dispose();pm.dispose();
+}
+function labelTexture(txt,{w=512,h=256,size=150,bg=null}={}){
+  const cv=document.createElement("canvas");cv.width=w;cv.height=h;const g=cv.getContext("2d");
+  if(bg){g.fillStyle=bg;g.fillRect(0,0,w,h);}
+  g.fillStyle="#eef2ff";g.textAlign="center";g.textBaseline="middle";
+  g.font=`700 ${size}px "Bricolage Grotesque",sans-serif`;g.fillText(txt,w/2,h/2+size*0.04);
+  const t=new THREE.CanvasTexture(cv);t.anisotropy=4;return t;
+}
+
+/* ============ 3 · KEYS (three.js keycaps) ============ */
+const Keys=(()=>{
+  let scene,camera,keys=[],ray,mouse=new THREE.Vector2(),built=false,hovered=null;
+  function build(){
+    initGL(); scene=new THREE.Scene(); scene.environment=ENV;
+    camera=new THREE.PerspectiveCamera(40,innerWidth/innerHeight,.1,100);
+    camera.position.set(0,5.2,8.5); camera.lookAt(0,-.3,0);
+    scene.add(new THREE.HemisphereLight(0xbcd0ff,0x0a0c12,.7));
+    const key=new THREE.DirectionalLight(0xffffff,1.2);key.position.set(3,8,5);scene.add(key);
+    const warm=new THREE.PointLight(0xffb27d,40,30);warm.position.set(0,3,4);scene.add(warm);
+    const letters=NAME_A.split(""); const gap=1.32, x0=-(letters.length-1)*gap/2;
+    const capGeo=new THREE.BoxGeometry(1.12,0.62,1.12);
+    const side=new THREE.MeshStandardMaterial({color:0x161a22,metalness:.5,roughness:.45,envMapIntensity:.8});
+    letters.forEach((ch,i)=>{
+      const top=new THREE.MeshStandardMaterial({color:0x20252f,metalness:.4,roughness:.5,envMapIntensity:.8,
+        map:labelTexture(ch,{w:256,h:256,size:150})});
+      top.emissive=new THREE.Color(0x000000);
+      const mats=[side,side,top,side,side,side];
+      const m=new THREE.Mesh(capGeo,mats); m.position.set(x0+i*gap,0,0);
+      m.userData={i,base:0,top}; scene.add(m); keys.push(m);
+    });
+    // base plate
+    const plate=new THREE.Mesh(new THREE.BoxGeometry(letters.length*gap+1,0.5,2.2),
+      new THREE.MeshStandardMaterial({color:0x0c0e14,metalness:.7,roughness:.4,envMapIntensity:.9}));
+    plate.position.y=-0.62; scene.add(plate);
+    ray=new THREE.Raycaster(); built=true;
+  }
+  addEventListener("pointermove",e=>{mouse.x=(e.clientX/innerWidth)*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;});
+  function render(t){
+    if(!built)build();
+    ray.setFromCamera(mouse,camera); const hit=ray.intersectObjects(keys)[0];
+    hovered=hit?hit.object:null;
+    keys.forEach(k=>{
+      const wave=REDUCED?0:Math.sin(t*0.003 - k.userData.i*0.5)*0.06;
+      let target=wave; let glow=0;
+      if(k===hovered){ target=-0.22; glow=1; }
+      k.position.y += (target-k.position.y)*0.25;
+      k.userData.top.emissive.setRGB(glow*0.9,glow*0.55,glow*0.2);
+    });
+    camera.position.x += ((ptr.x-.5)*3 - camera.position.x)*0.05;
+    camera.lookAt(0,-.3,0);
+    renderer.render(scene,camera);
+  }
+  return {render, resize:()=>{if(built){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}},
+    reset:()=>{}, dom:gl};
+})();
+
+/* ============ 4 · WORDS (three.js flight through words) ============ */
+const Words=(()=>{
+  let scene,camera,built=false,planes=[],glass=[],LEN=0;
+  const WORDS=["SYSTEMS","INTERFACES","TOOLS","DESIGN","SOFTWARE","MOTION","BUILD","SHIP","CRAFT","DETAIL"];
+  function build(){
+    initGL(); scene=new THREE.Scene(); scene.environment=ENV;
+    scene.fog=new THREE.FogExp2(0x07080b,.03);
+    camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,200); camera.position.set(0,0,0);
+    scene.add(new THREE.HemisphereLight(0xadc2ff,0x07080b,.6));
+    const rings=40, spacing=6.5; LEN=rings*spacing;
+    for(let r=0;r<rings;r++){
+      const word=WORDS[r%WORDS.length];
+      const tex=labelTexture(word,{w:1024,h:256,size:150});
+      const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,opacity:.92});
+      const pl=new THREE.Mesh(new THREE.PlaneGeometry(6,1.5),mat);
+      const ang=r*0.9, rad=4.5+Math.random()*2.2;
+      pl.position.set(Math.cos(ang)*rad,Math.sin(ang)*rad,-r*spacing);
+      scene.add(pl); planes.push(pl);
+      if(r%3===0){ const gm=new THREE.Mesh(new THREE.OctahedronGeometry(.5),
+        new THREE.MeshPhysicalMaterial({transmission:1,thickness:1,roughness:.05,ior:1.4,iridescence:1,envMapIntensity:1.2,color:0xffffff}));
+        gm.position.set(Math.cos(ang+2)*rad,Math.sin(ang+2)*rad,-r*spacing-3); scene.add(gm); glass.push(gm); }
+    }
+    built=true;
+  }
+  function render(t,dt){
+    if(!built)build();
+    camera.position.z -= REDUCED?0:dt*0.006;
+    if(camera.position.z<-LEN+16) camera.position.z+=LEN;
+    camera.position.x += ((ptr.x-.5)*6 - camera.position.x)*0.04;
+    camera.position.y += (-(ptr.y-.5)*5 - camera.position.y)*0.04;
+    camera.lookAt(camera.position.x*0.5,camera.position.y*0.5,camera.position.z-10);
+    planes.forEach(p=>p.quaternion.copy(camera.quaternion));
+    glass.forEach(g=>{g.rotation.x+=.01;g.rotation.y+=.012;});
+    renderer.render(scene,camera);
+  }
+  return {render, resize:()=>{if(built){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}},
+    reset:()=>{}, dom:gl};
+})();
+
+/* ============ controller ============ */
+const R={assemble:Assemble,signal:Signal,keys:Keys,words:Words};
+let current=null,raf=0,last=performance.now();
+function frame(now){ const dt=Math.min(now-last,50);last=now;
+  R[current].render(now,dt); raf=requestAnimationFrame(frame); }
+function resize(){
+  renderer&&renderer.setSize(innerWidth,innerHeight,false);
+  for(const k in R) R[k].resize&&R[k].resize();
+}
+addEventListener("resize",resize);
+function activate(c){
+  // toggle which canvas is visible
+  const three=(c==="keys"||c==="words");
+  gl.style.opacity=three?1:0; c2.style.opacity=three?0:1;
+  gl.style.transition=c2.style.transition="opacity .5s";
+  if(!three) R[c].reset&&R[c].reset();
+  current=c;
+  document.querySelectorAll(".rail button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  const m=META[c]; document.documentElement.style.setProperty("--accent-a",m.a);
+  document.getElementById("caption").innerHTML=`<p class="k">${m.k}</p><p>${m.html}</p>`;
+  document.getElementById("hint").textContent=m.hint;
+  resize();
+  cancelAnimationFrame(raf); last=performance.now();
+  if(REDUCED){ R[c].render(last,0); } else raf=requestAnimationFrame(frame);
+}
+gl.style.opacity=0;
+document.getElementById("loading").style.display="none";
+document.querySelectorAll(".rail button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.c)));
+addEventListener("keydown",e=>{const map={"1":"assemble","2":"signal","3":"keys","4":"words"};if(map[e.key])activate(map[e.key]);});
+activate("assemble");
+</script>

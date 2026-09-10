@@ -1,0 +1,224 @@
+<title>Projects — 5 Layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#06070a;--ink-2:#0a0c11;--fg:#eef0f4;--fg-dim:#9095a1;--fg-faint:#565b67;--line:rgba(255,255,255,.10);
+    --accent:#8fb4ff;--display:"Bricolage Grotesque",system-ui,sans-serif;--body:"Familjen Grotesk",system-ui,sans-serif;--mono:"JetBrains Mono",monospace}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ink);color:var(--fg);font-family:var(--body);-webkit-font-smoothing:antialiased;min-height:100svh}
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.7}
+  .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:84px clamp(20px,5vw,56px) 120px}
+  .head{margin:0 0 40px}
+  .head .k{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  .head h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.03em;margin:0}
+  .head p{color:var(--fg-dim);margin:12px 0 0;max-width:52ch;line-height:1.5}
+  .tier{margin:44px 0 16px;display:flex;align-items:baseline;gap:12px}
+  .tier h2{font-family:var(--display);font-weight:600;font-size:1.15rem;letter-spacing:.01em;margin:0;color:var(--fg)}
+  .tier .c{font-family:var(--mono);font-size:11px;color:var(--fg-faint);letter-spacing:.1em}
+  .tier::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* card (shared) */
+  .card{position:relative;text-align:left;width:100%;background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:16px;
+    padding:20px;cursor:pointer;color:inherit;font:inherit;transition:transform .25s cubic-bezier(.22,1,.36,1),background .25s,border-color .25s;display:block}
+  .card:hover{transform:translateY(-3px);background:rgba(255,255,255,.05);border-color:rgba(143,180,255,.4)}
+  .card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .card .t{font-family:var(--display);font-weight:600;font-size:1.08rem;letter-spacing:-.01em;margin:0}
+  .card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin:9px 0 0}
+  .card .d{color:var(--fg-dim);font-size:14px;line-height:1.55;margin:12px 0 0}
+  .card.feat{background:linear-gradient(150deg,rgba(143,180,255,.08),rgba(255,255,255,.02));border-color:rgba(143,180,255,.25)}
+  .card.mini{padding:15px 17px}.card.mini .d{display:none}
+
+  /* 1 GRID */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .grid.feat{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+
+  /* 2 RAILS */
+  .rail{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+  .rail .card{flex:0 0 300px;scroll-snap-align:start}
+  .rail::-webkit-scrollbar{height:7px}.rail::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:10px}
+
+  /* 3 INDEX */
+  .idx{border-top:1px solid var(--line)}
+  .idx .row{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font:inherit;cursor:pointer;
+    padding:16px 6px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;transition:padding .25s,background .25s}
+  .idx .row:hover{padding-left:16px;background:rgba(255,255,255,.02)}
+  .idx .row .t{font-family:var(--display);font-weight:600;font-size:clamp(1.1rem,2.4vw,1.5rem);letter-spacing:-.01em;color:var(--fg-dim);transition:color .2s}
+  .idx .row:hover .t{color:var(--fg)}
+  .idx .row .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--fg-faint);text-transform:uppercase;white-space:nowrap}
+  .idx .row .d{grid-column:1/-1;color:var(--fg-dim);font-size:14px;line-height:1.5;max-height:0;opacity:0;overflow:hidden;transition:max-height .35s ease,opacity .3s,margin .3s;margin:0}
+  .idx .row:hover .d,.idx .row:focus-visible .d{max-height:80px;opacity:1;margin-top:6px}
+
+  /* 4 CONSTELLATION */
+  .sky{position:relative}
+  .band{position:relative;min-height:150px;border-left:2px solid rgba(143,180,255,.15);margin:8px 0 8px;padding:8px 0 8px 20px}
+  .band .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);position:absolute;left:20px;top:0}
+  .band .field{position:relative;height:150px;margin-top:20px}
+  .node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;background:none;border:0;color:inherit;font:inherit;display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .node .dot{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px rgba(143,180,255,.6);transition:transform .25s}
+  .node .nm{font-size:12.5px;color:var(--fg-dim);transition:color .2s;opacity:.75}
+  .node:hover{z-index:5}.node:hover .dot{transform:scale(1.5)}.node:hover .nm{color:var(--fg);opacity:1}
+  .node.big .dot{width:15px;height:15px;background:#fff;box-shadow:0 0 16px rgba(180,205,255,.9)}
+  .node.big .nm{color:var(--fg);opacity:1;font-weight:500}
+
+  /* 5 MASONRY + FILTER */
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+  .chip{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;padding:8px 15px;border-radius:100px;border:1px solid var(--line);
+    background:transparent;color:var(--fg-dim);cursor:pointer;transition:.2s}
+  .chip:hover{color:var(--fg)}.chip[aria-pressed="true"]{background:var(--accent);color:#0a0b12;border-color:var(--accent)}
+  .masonry{columns:3 250px;column-gap:14px}
+  .masonry .card{break-inside:avoid;margin-bottom:14px}
+
+  /* switcher */
+  .bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:40;display:flex;gap:5px;padding:5px;border-radius:100px;
+    border:1px solid var(--line);background:rgba(14,16,22,.75);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);box-shadow:0 12px 40px rgba(0,0,0,.5)}
+  .bar button{font-family:var(--mono);font-size:12px;letter-spacing:.05em;padding:10px 15px;border-radius:100px;border:0;cursor:pointer;background:transparent;color:var(--fg-dim);transition:.2s;display:flex;gap:7px;align-items:baseline}
+  .bar button .n{font-size:10px;color:var(--fg-faint)}
+  .bar button:hover{color:var(--fg)}.bar button[aria-pressed="true"]{background:rgba(255,255,255,.12);color:#fff}
+
+  /* walkthrough overlay */
+  #ov{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,#080a0f,#06070a);overflow-y:auto;opacity:0;visibility:hidden;transition:opacity .4s}
+  #ov.on{opacity:1;visibility:visible}
+  #ov .inner{max-width:760px;margin:0 auto;padding:100px clamp(24px,6vw,64px) 120px}
+  #ov .back{position:fixed;top:22px;left:clamp(20px,5vw,52px);font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--fg-dim);
+    background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:100px;padding:9px 16px;cursor:pointer;transition:.2s}
+  #ov .back:hover{color:var(--fg);background:rgba(255,255,255,.1)}
+  #ov .tag{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+  #ov h2{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.03em;margin:0;line-height:1}
+  #ov .lead{color:var(--fg-dim);font-size:1.15rem;line-height:1.6;margin:22px 0 0;max-width:60ch}
+  #ov .soon{margin-top:40px;padding:22px;border:1px dashed var(--line);border-radius:14px;color:var(--fg-faint);font-size:14px;line-height:1.6}
+  @media (max-width:720px){.masonry{columns:1}}
+</style>
+
+<canvas id="stars"></canvas>
+<div class="wrap">
+  <div class="head">
+    <p class="k">Selected Work</p>
+    <h1>Projects</h1>
+    <p>Same projects, five ways to lay them out. Switch with the bar below (keys 1–5). Click any project to see the walkthrough transition and the back button.</p>
+  </div>
+  <div id="view"></div>
+</div>
+
+<div id="ov"><button class="back" id="back">← Back to projects</button><div class="inner" id="ovc"></div></div>
+
+<nav class="bar" aria-label="Layout">
+  <button data-l="grid" aria-pressed="true"><span class="n">1</span>Grid</button>
+  <button data-l="rails"><span class="n">2</span>Rails</button>
+  <button data-l="index"><span class="n">3</span>Index</button>
+  <button data-l="sky"><span class="n">4</span>Constellation</button>
+  <button data-l="masonry"><span class="n">5</span>Filter</button>
+</nav>
+
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const TIERS=[
+  {id:"featured",label:"Featured",items:[
+    {t:"Seizure Detection",tag:"EEG · PyTorch",d:"I read raw brain-wave recordings from epilepsy patients and train a model to flag the run-up to a seizure. The catch: I test it on patients it never saw, so it can't just memorize one person's brain.",feat:1},
+    {t:"Outlook Cleaner",tag:"React · MS Graph · live",d:"A tool I built to dig out a 15-year Outlook inbox. You sign in, preview what matches, and delete tens of thousands of emails in safe batches — the thing Outlook's own bulk delete just chokes on.",feat:1},
+    {t:"Semantic Cache",tag:"LLM infra · Python",d:"A cache that sits in front of an LLM so repeat questions don't get paid for twice. 'Reset my password' and 'I forgot my password' should hit the same answer. I also measure honestly when this helps and when it quietly hands back the wrong thing.",feat:1},
+  ]},
+  {id:"ds",label:"Data Science",items:[
+    {t:"Rotation-Aware Vision",tag:"Deep learning",d:"The same logo can sit upright or turned. I train only on upright images, then rotate the test ones and see if the model still names them — a normal network usually trips, a rotation-aware one shouldn't."},
+    {t:"Recovering Hidden Formulas",tag:"KAN vs MLP",d:"I bury a real math formula under noisy points and ask two kinds of network to dig it back out, then check them on clean values they never trained on. Fitting the noise doesn't count."},
+    {t:"Fixing Data Shift",tag:"Optimal transport",d:"I train on data that looks one way and test on data that's drifted. Before scoring, I try sliding the training data toward the test data and ask whether that actually buys me accuracy."},
+    {t:"Market Volatility Clusters",tag:"Quant · GARCH",d:"Markets have calm spells and stormy spells that bunch together. I test whether a model that knows about that clustering predicts tomorrow's swings better than a plain rolling average."},
+    {t:"Market Regimes",tag:"Quant · HMM",d:"Markets flip between moods — calm, choppy, crashy. I fit a model that tries to recover those hidden moods and check it against a crude volatility cutoff."},
+    {t:"Adaptive Hedge",tag:"Quant · Kalman",d:"Two related stocks usually move together, but the link drifts over time. I let a filter adjust the hedge as it goes and test whether that beats locking it in once."},
+  ]},
+  {id:"db",label:"Real-World Datasets",items:[
+    {t:"Building Energy Forecast",tag:"Time series",d:"Big buildings burn power every hour. I train a next-hour forecast on one building, then test it on a different building it never saw — memorize the first and the second falls apart."},
+    {t:"Calibrating Air Sensors",tag:"Sensors",d:"Cheap backyard air sensors don't match the official monitors. I learn a correction from sensors parked next to official ones, then test it at a monitor I held out."},
+    {t:"Finding Pipe Leaks",tag:"Sensors · ranking",d:"Water pipes can leak underground for ages. I turn the network's pressure readings into a ranked spot to dig — not just 'something's wrong somewhere' — and check how often the real leak sits near my top guess."},
+    {t:"Bridge Health Monitoring",tag:"Anomaly detection",d:"A real steel bridge wore sensors before and after it cracked. I learn what healthy looks like and flag odd behavior after the crack, while keeping false alarms under a hard cap."},
+    {t:"Naming Detector Noise",tag:"LIGO · vision",d:"Gravitational-wave detectors pick up bursts of junk noise. I train to name the noise shapes on one detector and test on another, so I can't lean on a single site's quirks."},
+    {t:"Listening to Beehives",tag:"Audio · regression",d:"Ten rooftop hives recorded a year of sound and temperature. I predict how strong each colony is from that — but I test on a hive left out entirely, since a model can score well just by memorizing which hive it's hearing."},
+  ]},
+  {id:"ml",label:"Machine Learning",items:[
+    {t:"Reverse-Engineering a Network",tag:"Interpretability",d:"A tiny network can ace a copy puzzle while hiding where it actually does the copying. I train one, switch off the parts I think are responsible, and see if the answer changes the way I predicted."},
+    {t:"Learning Without Labels",tag:"Self-supervised",d:"Camera traps in different spots have different lighting. I train an encoder with no labels, freeze it, and check whether it still recognizes animals on a camera it never saw."},
+    {t:"Teaching Word Order",tag:"Transformers",d:"A language model needs to know which word came first. I compare a few ways of telling it, then feed it text longer than anything it trained on to see which way holds up."},
+    {t:"Trees vs Foundation Models",tag:"Tabular ML",d:"New 'foundation models' claim they finally beat gradient-boosted trees on everyday spreadsheet data. I run a fair bakeoff on the same splits to see when that's actually true."},
+    {t:"Better Vector Search",tag:"pgvector",d:"Vector search can quietly miss the right results once you add filters. I test whether tuned queries actually find more of what you asked for than the stock settings."},
+    {t:"Catching Train/Serve Skew",tag:"MLOps",d:"Models often look great in testing then flop live because the features drift between the two. I build a check that catches that mismatch before you trust the score."},
+  ]},
+  {id:"more",label:"More Projects",items:[
+    {t:"OmniRoute",tag:"AI gateway"},{t:"Porter",tag:"Waiting-room proxy"},{t:"Grep vs Embeddings",tag:"Search study"},
+    {t:"Graphify",tag:"Knowledge graphs"},{t:"Cost Autopilot",tag:"LLM routing"},{t:"AQ-Tracker",tag:"Air quality"},
+    {t:"Machine Debugger",tag:"Fault detection"},{t:"JIT Bug Predictor",tag:"SWE"},{t:"Flaky Test Finder",tag:"SWE"},
+    {t:"Blame Lines",tag:"SWE"},{t:"CI Failure Predictor",tag:"SWE"},{t:"Generative Flows",tag:"Deep learning"},
+    {t:"Conformal Bands",tag:"Uncertainty"},{t:"Neural ODEs",tag:"Deep learning"},{t:"Topological Holes",tag:"TDA"},
+    {t:"Sketched Least-Squares",tag:"Numerical"},{t:"Compressed Sensing",tag:"Signals"},{t:"Execution Path",tag:"Quant"},
+    {t:"Hawkes Bursts",tag:"Quant"},{t:"Inventory Quotes",tag:"Quant"},{t:"Point-in-Time Join",tag:"MLOps"},
+    {t:"Cache Regret",tag:"Systems"},{t:"River + Kafka",tag:"Streaming ML"},
+  ]},
+];
+
+/* ---- walkthrough overlay (shared by all layouts) ---- */
+const ov=document.getElementById("ov"),ovc=document.getElementById("ovc");
+function open(p){
+  ovc.innerHTML=`<p class="tag">${p.tag||"Project"}</p><h2>${p.t}</h2>`+
+    (p.d?`<p class="lead">${p.d}</p>`:"")+
+    `<div class="soon">This is where the full walkthrough for <b>${p.t}</b> opens — scrolls on its own, and the back button up top drops you exactly where you were in the list.${p.tag&&p.tag.includes("live")?" (Outlook Cleaner's real React app gets ported in here.)":""}</div>`;
+  ov.classList.add("on");ov.scrollTop=0;
+}
+document.getElementById("back").addEventListener("click",()=>ov.classList.remove("on"));
+addEventListener("keydown",e=>{if(e.key==="Escape")ov.classList.remove("on");});
+
+/* ---- card factory ---- */
+function card(p,cls){const b=document.createElement("button");b.className="card"+(p.feat?" feat":"")+(cls||"");
+  b.innerHTML=`<p class="t">${p.t}</p><p class="tag">${p.tag||""}</p>`+(p.d?`<p class="d">${p.d}</p>`:"");
+  b.onclick=()=>open(p);return b;}
+function tierHead(tt){const h=document.createElement("div");h.className="tier";
+  h.innerHTML=`<h2>${tt.label}</h2><span class="c">${tt.items.length}</span>`;return h;}
+
+/* ---- 5 layouts ---- */
+const view=document.getElementById("view");
+const LAYOUTS={
+  grid(){TIERS.forEach(tt=>{view.append(tierHead(tt));const g=document.createElement("div");
+    g.className="grid"+(tt.id==="featured"?" feat":"");
+    tt.items.forEach(p=>g.append(card(p,tt.id==="more"?" mini":"")));view.append(g);});},
+  rails(){TIERS.forEach(tt=>{view.append(tierHead(tt));const r=document.createElement("div");r.className="rail";
+    tt.items.forEach(p=>r.append(card(p,tt.id==="more"?" mini":"")));view.append(r);});},
+  index(){TIERS.forEach(tt=>{view.append(tierHead(tt));const l=document.createElement("div");l.className="idx";
+    tt.items.forEach(p=>{const b=document.createElement("button");b.className="row";
+      b.innerHTML=`<span class="t">${p.t}</span><span class="tag">${p.tag||""}</span>`+(p.d?`<span class="d">${p.d}</span>`:"");
+      b.onclick=()=>open(p);l.append(b);});view.append(l);});},
+  sky(){const s=document.createElement("div");s.className="sky";
+    TIERS.forEach(tt=>{const band=document.createElement("div");band.className="band";
+      band.innerHTML=`<span class="lbl">${tt.label}</span>`;const f=document.createElement("div");f.className="field";
+      const n=tt.items.length;tt.items.forEach((p,i)=>{const b=document.createElement("button");
+        b.className="node"+(p.feat?" big":"");
+        const x=6+ (i+.5)/n*88 + (Math.sin(i*12.9)*4); const y=25+Math.abs(Math.sin(i*7.3))*55;
+        b.style.left=x+"%";b.style.top=y+"%";
+        b.innerHTML=`<span class="dot"></span><span class="nm">${p.t}</span>`;b.onclick=()=>open(p);f.append(b);});
+      band.append(f);s.append(band);});view.append(s);},
+  masonry(){const cats=[["all","All"],...TIERS.map(t=>[t.id,t.label])];
+    const bar=document.createElement("div");bar.className="filters";
+    cats.forEach(([id,lbl],i)=>{const c=document.createElement("button");c.className="chip";c.textContent=lbl;
+      c.setAttribute("aria-pressed",i===0);c.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+        c.setAttribute("aria-pressed","true");fill(id);};bar.append(c);});
+    view.append(bar);const m=document.createElement("div");m.className="masonry";view.append(m);
+    function fill(cat){m.innerHTML="";TIERS.filter(t=>cat==="all"||t.id===cat).forEach(tt=>tt.items.forEach(p=>m.append(card(p,p.d?"":" mini"))));}
+    fill("all");},
+};
+let current="grid";
+function render(l){current=l;view.innerHTML="";LAYOUTS[l]();
+  document.querySelectorAll(".bar button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.l===l));}
+document.querySelectorAll(".bar button").forEach(b=>b.addEventListener("click",()=>render(b.dataset.l)));
+addEventListener("keydown",e=>{const m={"1":"grid","2":"rails","3":"index","4":"sky","5":"masonry"};if(m[e.key])render(m[e.key]);});
+render("grid");
+
+/* ---- starfield backdrop ---- */
+(function(){const cv=document.getElementById("stars");const g=cv.getContext("2d");const D=Math.min(devicePixelRatio||1,RM?1:2);
+  let W,H,st=[];
+  function size(){W=cv.width=innerWidth*D;H=cv.height=innerHeight*D;
+    const n=Math.min(RM?50:Math.round(innerWidth*innerHeight/16000),200);
+    st=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1+.3)*D,tw:Math.random()*6,vy:(-.02-Math.random()*.05)*D}));}
+  function draw(t){g.clearRect(0,0,W,H);g.globalCompositeOperation="lighter";
+    for(const s of st){s.y+=s.vy;if(s.y<0)s.y=H;const a=.14+.32*Math.abs(Math.sin(t*.0006+s.tw));
+      g.fillStyle=`rgba(150,175,220,${a})`;g.beginPath();g.arc(s.x,s.y,s.r,0,7);g.fill();}g.globalCompositeOperation="source-over";}
+  function loop(t){draw(t);if(!RM)requestAnimationFrame(loop);}
+  cv.style.position="fixed";size();draw(0);
+  addEventListener("resize",()=>{size();if(RM)draw(0);});
+  if(!RM)requestAnimationFrame(loop);
+})();
+</script>

@@ -1,0 +1,289 @@
+<title>Hero Lab 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Familjen+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --ink:#07080b;
+    --fg:#eef0f4;
+    --fg-dim:#8b909c;
+    --fg-faint:#565b67;
+    --line:rgba(255,255,255,.10);
+    --glass:rgba(14,16,22,.6);
+    --accent-a:#9fc0ff;
+    --display:"Bricolage Grotesque",-apple-system,system-ui,sans-serif;
+    --body:"Familjen Grotesk",-apple-system,system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+  #stage{position:fixed;inset:0;overflow:hidden;background:radial-gradient(130% 100% at 60% 15%,#101420,#07080b 70%)}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #scrim{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(90deg,rgba(7,8,11,.9) 0%,rgba(7,8,11,.55) 34%,transparent 62%),
+               linear-gradient(0deg,rgba(7,8,11,.85) 0%,transparent 34%)}
+  #loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--fg-faint);
+    font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase}
+
+  .content{position:relative;z-index:5;height:100%;display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(24px,7vw,120px);max-width:1180px;pointer-events:none}
+  .content *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--fg-dim);display:flex;align-items:center;gap:12px;margin:0 0 26px}
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--fg-faint)}
+  h1{font-family:var(--display);font-optical-sizing:auto;font-weight:800;
+    font-size:clamp(2.9rem,8vw,6.8rem);line-height:.94;letter-spacing:-.03em;margin:0;
+    text-wrap:balance;max-width:15ch}
+  .sub{font-size:clamp(1.02rem,1.7vw,1.3rem);line-height:1.5;color:var(--fg-dim);max-width:44ch;margin:26px 0 0}
+  .cta{display:flex;gap:14px;margin-top:38px;flex-wrap:wrap}
+  .btn{font-family:var(--body);font-size:15px;font-weight:500;padding:13px 24px;border-radius:100px;
+    cursor:pointer;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:transparent;
+    transition:background .25s,transform .25s}
+  .btn:hover{background:rgba(255,255,255,.06);transform:translateY(-1px)}
+  .btn.primary{background:var(--fg);color:#0a0b0e;border-color:var(--fg)}
+  .btn.primary:hover{background:#fff}
+
+  .rail{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:40;display:flex;gap:5px;padding:5px;
+    border-radius:100px;border:1px solid var(--line);background:var(--glass);
+    backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4)}
+  .rail button{font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:9px 15px;border-radius:100px;
+    border:0;cursor:pointer;background:transparent;color:var(--fg-dim);transition:color .2s,background .2s;
+    display:flex;align-items:baseline;gap:8px}
+  .rail button .n{font-size:10px;color:var(--fg-faint)}
+  .rail button:hover{color:var(--fg)}
+  .rail button[aria-pressed="true"]{background:rgba(255,255,255,.10);color:var(--fg)}
+  .rail button:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
+
+  .caption{position:fixed;left:clamp(24px,7vw,120px);bottom:clamp(20px,4vh,42px);z-index:40;max-width:min(560px,80vw)}
+  .caption .k{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent-a);margin:0 0 7px}
+  .caption p{margin:0;font-size:13.5px;line-height:1.5;color:var(--fg-dim)}
+  .caption p b{color:var(--fg);font-weight:500}
+  .brand{position:fixed;right:clamp(24px,7vw,120px);bottom:clamp(20px,4vh,42px);z-index:40;
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--fg-faint);text-align:right;line-height:1.7}
+
+  @media (max-width:720px){.rail button .lbl{display:none}.rail button{padding:9px 13px}.brand{display:none}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div id="scrim"></div>
+  <div id="loading">loading 3D…</div>
+  <div class="content">
+    <p class="eyebrow">Muhammad Ahmad</p>
+    <h1>Engineer &amp; builder of things that feel alive.</h1>
+    <p class="sub">I design and ship interfaces, tools, and systems — with an eye for how they move, not just what they do.</p>
+    <div class="cta">
+      <a class="btn primary" href="#">View work</a>
+      <a class="btn" href="#">Get in touch</a>
+    </div>
+  </div>
+</div>
+
+<nav class="rail" aria-label="Hero concept">
+  <button data-c="prism"    aria-pressed="true"><span class="n">1</span><span class="lbl">Prism</span></button>
+  <button data-c="cluster"  aria-pressed="false"><span class="n">2</span><span class="lbl">Cluster</span></button>
+  <button data-c="monolith" aria-pressed="false"><span class="n">3</span><span class="lbl">Monolith</span></button>
+  <button data-c="tunnel"   aria-pressed="false"><span class="n">4</span><span class="lbl">Immersive</span></button>
+</nav>
+
+<div class="caption" id="caption" aria-live="polite"></div>
+<div class="brand">HERO&nbsp;LAB&nbsp;·&nbsp;3D<br>4&nbsp;directions</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if(!window.THREE){
+  document.getElementById("loading").textContent="3D failed to load";
+}else{
+(function(){
+  const DPR = Math.min(devicePixelRatio||1, REDUCED?1:1.4);
+  const canvas = document.getElementById("gl");
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+  renderer.setPixelRatio(DPR);
+  renderer.setClearColor(0x07080b, 1);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+
+  // ---- procedural studio environment (for glass + metal reflections) ----
+  function makeEnv(){
+    const c=document.createElement("canvas"); c.width=512; c.height=256;
+    const g=c.getContext("2d");
+    const grd=g.createLinearGradient(0,0,0,256);
+    grd.addColorStop(0,"#20263a"); grd.addColorStop(.5,"#0b0d15"); grd.addColorStop(1,"#05060a");
+    g.fillStyle=grd; g.fillRect(0,0,512,256);
+    const blobs=[[120,70,"#8fb5ff",90],[380,60,"#ff9ecb",70],[260,180,"#7dffe0",80],[60,200,"#ffffff",50]];
+    for(const [x,y,col,r] of blobs){ const rg=g.createRadialGradient(x,y,0,x,y,r);
+      rg.addColorStop(0,col); rg.addColorStop(1,"transparent"); g.fillStyle=rg; g.fillRect(0,0,512,256); }
+    const tex=new THREE.CanvasTexture(c); tex.mapping=THREE.EquirectangularReflectionMapping;
+    const pmrem=new THREE.PMREMGenerator(renderer); pmrem.compileEquirectangularShader();
+    const env=pmrem.fromEquirectangular(tex).texture; tex.dispose(); pmrem.dispose(); return env;
+  }
+  const ENV = makeEnv();
+
+  const pointer={x:0,y:0,tx:0,ty:0};
+  addEventListener("pointermove",e=>{ pointer.tx=(e.clientX/innerWidth-.5); pointer.ty=(e.clientY/innerHeight-.5); });
+
+  function keyLights(scene){
+    scene.add(new THREE.HemisphereLight(0x9db4ff,0x080a10,.55));
+    const k=new THREE.DirectionalLight(0xffffff,1.4); k.position.set(4,6,6); scene.add(k);
+    const r=new THREE.PointLight(0x66e0ff,60,40); r.position.set(-7,-2,4); scene.add(r);
+    const m=new THREE.PointLight(0xff7ac0,55,40); m.position.set(6,-4,-3); scene.add(m);
+  }
+  const cam = ()=>{ const c=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.1,200); return c; };
+
+  // ---------------- 1 · PRISM — rotating refractive glass prisms ----------------
+  function buildPrism(){
+    const scene=new THREE.Scene(); scene.environment=ENV;
+    const camera=cam(); camera.position.set(0,0,9);
+    keyLights(scene);
+    const glass=new THREE.MeshPhysicalMaterial({
+      transmission:1, thickness:2.2, ior:1.5, roughness:0.02, metalness:0,
+      iridescence:1, iridescenceIOR:1.3, iridescenceThicknessRange:[120,420],
+      clearcoat:1, clearcoatRoughness:.05, envMapIntensity:1.4, color:0xffffff });
+    const group=new THREE.Group(); scene.add(group);
+    const defs=[[2.4,3.4,0,0,0,1],[1.1,1.7,-3.6,1.4,-2,.8],[1.4,2.1,3.4,-1.5,-1,1.1]];
+    const prisms=[];
+    for(const [rad,h,x,y,z,sp] of defs){
+      const geo=new THREE.CylinderGeometry(rad,rad,h,3,1); // triangular prism
+      const m=new THREE.Mesh(geo,glass); m.position.set(x,y,z); m.userData.sp=sp;
+      m.rotation.set(Math.random(),Math.random(),Math.random()); group.add(m); prisms.push(m);
+    }
+    // little metal accents
+    const chrome=new THREE.MeshStandardMaterial({color:0xdfe6f2,metalness:1,roughness:.18,envMapIntensity:1.2});
+    for(let i=0;i<5;i++){ const s=new THREE.Mesh(new THREE.OctahedronGeometry(.28),chrome);
+      s.position.set((Math.random()-.5)*10,(Math.random()-.5)*6,(Math.random()-.5)*4-1); group.add(s); }
+    return {scene,camera,update:(t)=>{
+      prisms.forEach(p=>{ p.rotation.y+=.004*p.userData.sp; p.rotation.x+=.0018*p.userData.sp; });
+      pointer.x+=(pointer.tx-pointer.x)*.05; pointer.y+=(pointer.ty-pointer.y)*.05;
+      group.rotation.y=pointer.x*.5; group.rotation.x=pointer.y*.3;
+      camera.position.x=pointer.x*1.2; camera.lookAt(0,0,0);
+    }};
+  }
+
+  // ---------------- 2 · CLUSTER — drifting constellation of solids ----------------
+  function buildCluster(){
+    const scene=new THREE.Scene(); scene.environment=ENV;
+    scene.fog=new THREE.FogExp2(0x07080b,.045);
+    const camera=cam(); camera.position.set(0,0,13);
+    keyLights(scene);
+    const group=new THREE.Group(); scene.add(group);
+    const geos=[new THREE.IcosahedronGeometry(1,0),new THREE.OctahedronGeometry(1,0),
+      new THREE.DodecahedronGeometry(1,0),new THREE.TorusGeometry(.8,.32,16,40),
+      new THREE.TetrahedronGeometry(1.1)];
+    const glass=new THREE.MeshPhysicalMaterial({transmission:1,thickness:1.6,ior:1.45,roughness:.05,
+      iridescence:1,iridescenceThicknessRange:[100,400],envMapIntensity:1.3,color:0xffffff});
+    const chrome=new THREE.MeshStandardMaterial({color:0xccd4e4,metalness:1,roughness:.15,envMapIntensity:1.3});
+    const tint=new THREE.MeshStandardMaterial({color:0x6f8cff,metalness:.3,roughness:.25,envMapIntensity:1});
+    const mats=[glass,chrome,tint,glass];
+    const items=[];
+    for(let i=0;i<15;i++){
+      const g=geos[i%geos.length].clone();
+      const m=new THREE.Mesh(g,mats[i%mats.length]);
+      const s=.5+Math.random()*1.1; m.scale.setScalar(s);
+      m.position.set((Math.random()-.5)*16,(Math.random()-.5)*10,(Math.random()-.5)*10);
+      m.userData={rx:(Math.random()-.5)*.01,ry:(Math.random()-.5)*.01,ph:Math.random()*6,base:m.position.y};
+      group.add(m); items.push(m);
+    }
+    return {scene,camera,update:(t)=>{
+      items.forEach(m=>{ m.rotation.x+=m.userData.rx; m.rotation.y+=m.userData.ry;
+        m.position.y=m.userData.base+Math.sin(t*.0006+m.userData.ph)*.5; });
+      group.rotation.y=t*.00006;
+      pointer.x+=(pointer.tx-pointer.x)*.05; pointer.y+=(pointer.ty-pointer.y)*.05;
+      camera.position.x=pointer.x*4; camera.position.y=-pointer.y*3; camera.lookAt(0,0,0);
+    }};
+  }
+
+  // ---------------- 3 · MONOLITH — one big faceted chrome sculpture ----------------
+  function buildMonolith(){
+    const scene=new THREE.Scene(); scene.environment=ENV;
+    const camera=cam(); camera.position.set(0,0,7);
+    scene.add(new THREE.HemisphereLight(0x8aa0ff,0x06070c,.4));
+    const key=new THREE.DirectionalLight(0xffffff,1.1); key.position.set(3,5,5); scene.add(key);
+    const rim1=new THREE.PointLight(0x4fd6ff,90,30); rim1.position.set(-6,1,-2); scene.add(rim1);
+    const rim2=new THREE.PointLight(0xff5fae,80,30); rim2.position.set(6,-3,-2); scene.add(rim2);
+    const geo=new THREE.TorusKnotGeometry(1.7,.55,220,32,2,3);
+    const mat=new THREE.MeshStandardMaterial({color:0x0e1118,metalness:1,roughness:.16,envMapIntensity:1.5});
+    const knot=new THREE.Mesh(geo,mat); scene.add(knot);
+    // faint faceted halo shell
+    const shell=new THREE.Mesh(new THREE.IcosahedronGeometry(3.4,0),
+      new THREE.MeshBasicMaterial({color:0x1a2030,wireframe:true,transparent:true,opacity:.35}));
+    scene.add(shell);
+    return {scene,camera,update:(t)=>{
+      knot.rotation.y=t*.0004; knot.rotation.x=Math.sin(t*.0003)*.25;
+      shell.rotation.y=-t*.00015; shell.rotation.x=t*.0001;
+      pointer.x+=(pointer.tx-pointer.x)*.05; pointer.y+=(pointer.ty-pointer.y)*.05;
+      camera.position.x=pointer.x*2; camera.position.y=-pointer.y*1.5; camera.lookAt(0,0,0);
+    }};
+  }
+
+  // ---------------- 4 · IMMERSIVE — flight through a shape tunnel ----------------
+  function buildTunnel(){
+    const scene=new THREE.Scene(); scene.environment=ENV;
+    scene.fog=new THREE.FogExp2(0x07080b,.035);
+    const camera=cam(); camera.position.set(0,0,0);
+    scene.add(new THREE.HemisphereLight(0x9db4ff,0x06070c,.5));
+    const k=new THREE.DirectionalLight(0xffffff,1); k.position.set(2,3,2); scene.add(k);
+    const rings=48, per=9, spacing=6, radius=7, LEN=rings*spacing;
+    const geo=new THREE.OctahedronGeometry(.7,0);
+    const mat=new THREE.MeshStandardMaterial({color:0xaab8d8,metalness:.85,roughness:.25,envMapIntensity:1.2});
+    const mesh=new THREE.InstancedMesh(geo,mat,rings*per);
+    const dummy=new THREE.Object3D(); let i=0;
+    for(let r=0;r<rings;r++){ const rr=radius+Math.sin(r*.5)*1.6;
+      for(let p=0;p<per;p++){ const a=(p/per)*Math.PI*2 + r*.32;
+        dummy.position.set(Math.cos(a)*rr,Math.sin(a)*rr,-r*spacing);
+        dummy.rotation.set(r*.3,a,r*.2); dummy.scale.setScalar(.6+Math.random()*.8);
+        dummy.updateMatrix(); mesh.setMatrixAt(i++,dummy.matrix); } }
+    scene.add(mesh);
+    return {scene,camera,update:(t,dt)=>{
+      camera.position.z -= (REDUCED?0:dt*0.006);
+      if(camera.position.z < -LEN+20) camera.position.z += LEN;   // seamless loop
+      pointer.x+=(pointer.tx-pointer.x)*.04; pointer.y+=(pointer.ty-pointer.y)*.04;
+      camera.position.x=pointer.x*5; camera.position.y=-pointer.y*4;
+      camera.lookAt(pointer.x*3,-pointer.y*2,camera.position.z-10);
+    }};
+  }
+
+  const BUILDERS={prism:buildPrism,cluster:buildCluster,monolith:buildMonolith,tunnel:buildTunnel};
+  const META={
+    prism:{a:"#9fc0ff",k:"01 — refractive glass",html:"<b>Prism.</b> Rotating triangular glass prisms with real transmission + iridescence. Elegant, tactile, and reads as craft. Cursor tilts the scene."},
+    cluster:{a:"#8fe6d0",k:"02 — floating constellation",html:"<b>Cluster.</b> A drifting cloud of glass, chrome, and tinted solids with depth fog. Playful and alive; the cursor flies the camera through it."},
+    monolith:{a:"#7db4ff",k:"03 — one bold sculpture",html:"<b>Monolith.</b> A single faceted chrome knot with colored rim light and a wireframe halo. Confident and central — the whole page hangs off one object."},
+    tunnel:{a:"#b8a0ff",k:"04 — immersive flight",html:"<b>Immersive.</b> An endless tunnel of metallic shapes you fly through, steered by the cursor. Maximum motion — best for a short, striking landing."},
+  };
+  const cache={};
+  let current=null, raf=0, last=performance.now();
+
+  function frame(now){
+    const dt=Math.min(now-last,50); last=now;
+    if(current&&cache[current]) cache[current].update(now,dt);
+    renderer.render(cache[current].scene,cache[current].camera);
+    raf=requestAnimationFrame(frame);
+  }
+  function resize(){ renderer.setSize(innerWidth,innerHeight,false);
+    for(const k in cache){ cache[k].camera.aspect=innerWidth/innerHeight; cache[k].camera.updateProjectionMatrix(); } }
+  addEventListener("resize",resize);
+
+  function activate(c){
+    if(!cache[c]) cache[c]=BUILDERS[c]();
+    current=c; resize();
+    document.querySelectorAll(".rail button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+    const m=META[c]; document.documentElement.style.setProperty("--accent-a",m.a);
+    document.getElementById("caption").innerHTML=`<p class="k">${m.k}</p><p>${m.html}</p>`;
+    cancelAnimationFrame(raf); last=performance.now();
+    if(REDUCED){ cache[c].update(last,0); renderer.render(cache[c].scene,cache[c].camera); }
+    else raf=requestAnimationFrame(frame);
+  }
+
+  document.getElementById("loading").style.display="none";
+  document.querySelectorAll(".rail button").forEach(b=>b.addEventListener("click",()=>activate(b.dataset.c)));
+  addEventListener("keydown",e=>{ const map={"1":"prism","2":"cluster","3":"monolith","4":"tunnel"}; if(map[e.key]) activate(map[e.key]); });
+  activate("prism");
+})();
+}
+</script>

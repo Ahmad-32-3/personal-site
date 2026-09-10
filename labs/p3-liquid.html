@@ -1,0 +1,67 @@
+<title>Liquid · Metaballs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#05060a;--fg:#eef0f4;--fg-dim:#9aa0ad;--fg-faint:#5a6070;--line:rgba(255,255,255,.13);
+    --mono:"JetBrains Mono",ui-monospace,monospace;--body:"Familjen Grotesk",system-ui,sans-serif;--display:"Bricolage Grotesque",system-ui,sans-serif}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #scrim{position:fixed;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(5,6,10,.7),transparent 30%),radial-gradient(120% 100% at 50% 30%,transparent 55%,rgba(5,6,10,.5))}
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--fg-dim);text-decoration:none}.nav a:hover{color:var(--fg)}
+  .hero{position:fixed;inset:0;z-index:8;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 24px;pointer-events:none}
+  .hero *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 18px}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(2.8rem,8vw,6.4rem);line-height:.94;letter-spacing:-.03em;margin:0;text-wrap:balance}
+  .sub{font-size:clamp(1.02rem,1.7vw,1.28rem);line-height:1.5;color:var(--fg-dim);max-width:40ch;margin:22px 0 0}
+  .cta{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;justify-content:center}
+  .btn{font-size:15px;font-weight:500;padding:13px 26px;border-radius:100px;cursor:pointer;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:transparent;transition:.25s}
+  .btn:hover{background:rgba(255,255,255,.08)}.btn.primary{background:var(--fg);color:#0a0b0e;border-color:var(--fg)}
+  .tag{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:10;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--fg-faint)}
+  @media (max-width:720px){.nav{display:none}}
+</style>
+<canvas id="c"></canvas><div id="scrim"></div>
+<div class="mark">MUHAMMAD&nbsp;AHMAD</div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+<div class="hero"><p class="eyebrow">Engineer · Builder</p>
+  <h1>Liquid&nbsp;metal.</h1>
+  <p class="sub">Screen-space metaballs that merge and split as they follow you — chrome with an iridescent skin.</p>
+  <div class="cta"><a class="btn primary" href="#">View work</a><a class="btn" href="#">Get in touch</a></div></div>
+<div class="tag">METABALLS · SCREEN-SPACE FIELD SHADER · DRAG THE GOO</div>
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,RM?1:1.5);
+const cv=document.getElementById("c"),gl=cv.getContext("webgl2");
+let mx=innerWidth/2,my=innerHeight/2;addEventListener("pointermove",e=>{mx=e.clientX;my=e.clientY;});
+const VS=`#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+const FS=`#version 300 es
+precision highp float;uniform vec2 uRes;uniform float uTime;uniform vec2 uB[8];uniform int uN;out vec4 o;
+float field(vec2 uv){float s=0.;
+  for(int i=0;i<8;i++){if(i>=uN)break;vec2 d=uv-uB[i];s+=0.03/(dot(d,d)+0.0009);}
+  for(int i=0;i<3;i++){float f=float(i);vec2 c=vec2(sin(uTime*0.3+f*2.1)*0.55,cos(uTime*0.23+f*1.7)*0.32);vec2 d=uv-c;s+=0.022/(dot(d,d)+0.0014);}
+  return s;}
+void main(){vec2 uv=(gl_FragCoord.xy-0.5*uRes)/uRes.y;float f=field(uv);float e=0.0022;
+  vec2 g=vec2(field(uv+vec2(e,0.))-field(uv-vec2(e,0.)),field(uv+vec2(0.,e))-field(uv-vec2(0.,e)));
+  vec3 col=vec3(0.015,0.02,0.035);float edge=smoothstep(0.92,1.12,f);
+  if(f>0.9){vec3 n=normalize(vec3(-g*1.4,0.6));float fr=pow(1.-n.z,2.4);
+    vec3 ir=0.5+0.5*cos(6.283*(f*0.35+vec3(0.,0.33,0.67)));float df=max(dot(n,normalize(vec3(0.5,0.8,0.6))),0.);
+    col=mix(col,ir*0.45+df*0.6+fr*vec3(0.85,0.92,1.),edge);}
+  o=vec4(col,1.);}`;
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);gl.useProgram(pr);
+const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+const l=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
+const uR=gl.getUniformLocation(pr,"uRes"),uT=gl.getUniformLocation(pr,"uTime"),uB=gl.getUniformLocation(pr,"uB"),uN=gl.getUniformLocation(pr,"uN");
+function size(){cv.width=innerWidth*DPR;cv.height=innerHeight*DPR;gl.viewport(0,0,cv.width,cv.height);}
+size();addEventListener("resize",size);
+const trail=[];
+function frame(now){
+  const uvx=(mx*DPR-.5*cv.width)/cv.height,uvy=((innerHeight-my)*DPR-.5*cv.height)/cv.height;
+  trail.unshift([uvx,uvy]);if(trail.length>6)trail.pop();
+  const flat=new Float32Array(16);for(let i=0;i<6;i++){const q=trail[Math.min(i,trail.length-1)]||[0,0];flat[i*2]=q[0];flat[i*2+1]=q[1];}
+  gl.uniform2f(uR,cv.width,cv.height);gl.uniform1f(uT,now/1000);gl.uniform2fv(uB,flat);gl.uniform1i(uN,6);
+  gl.drawArrays(gl.TRIANGLES,0,3);if(!RM)requestAnimationFrame(frame);}
+frame(RM?2000:0);
+</script>

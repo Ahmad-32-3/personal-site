@@ -1,0 +1,93 @@
+<title>Depth · Assemble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{--ink:#06070a;--fg:#eef0f4;--fg-dim:#9095a1;--fg-faint:#565b67;--line:rgba(255,255,255,.12);
+    --mono:"JetBrains Mono",ui-monospace,monospace;--body:"Familjen Grotesk",system-ui,sans-serif}
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 44%,transparent 54%,rgba(6,7,10,.6))}
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--fg-dim)}
+  .mark span{color:var(--fg-faint)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;font-family:var(--mono);font-size:12px}
+  .nav a{color:var(--fg-dim);text-decoration:none}.nav a:hover{color:var(--fg)}
+  .lower{position:fixed;left:0;right:0;top:64%;z-index:10;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px;pointer-events:none}
+  .lower *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 16px}
+  .tagline{font-size:clamp(1.02rem,1.9vw,1.35rem);line-height:1.45;color:var(--fg-dim);max-width:34ch;margin:0}
+  .cta{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+  .btn{font-size:15px;font-weight:500;padding:13px 26px;border-radius:100px;cursor:pointer;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:transparent;transition:.25s}
+  .btn:hover{background:rgba(255,255,255,.07)}.btn.primary{background:var(--fg);color:#0a0b0e;border-color:var(--fg)}
+  @media (max-width:720px){.nav{display:none}.lower{top:67%}}
+</style>
+<canvas id="c"></canvas><div id="vig"></div>
+<div class="mark">MUHAMMAD&nbsp;AHMAD&nbsp;<span>/ Engineer</span></div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+<div class="lower"><p class="eyebrow">Engineer · Builder</p>
+  <p class="tagline">Interfaces, tools, and systems — with an eye for how they feel.</p>
+  <div class="cta"><a class="btn primary" href="#">View work</a><a class="btn" href="#">Get in touch</a></div></div>
+<script>
+const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,RM?1:2);
+const cv=document.getElementById("c"),x=cv.getContext("2d");
+const NAME=["MUHAMMAD","AHMAD"]; let W,H,cx,cy;
+const p={tx:0,ty:0,x:0,y:0,mx:-9999,my:-9999,on:0};
+addEventListener("pointermove",e=>{p.tx=e.clientX/innerWidth-.5;p.ty=e.clientY/innerHeight-.5;p.mx=e.clientX*DPR;p.my=e.clientY*DPR;p.on=1;});
+addEventListener("pointerleave",()=>p.on=0);
+let name=[],stars=[],orbit=[],bok=[];
+function sampleName(){
+  const o=document.createElement("canvas");o.width=innerWidth;o.height=innerHeight;const g=o.getContext("2d");
+  g.fillStyle="#fff";g.textAlign="center";g.textBaseline="middle";
+  const fs=Math.min(innerWidth*0.145,innerHeight*0.24,190);g.font=`800 ${fs}px "Bricolage Grotesque",sans-serif`;
+  const X=innerWidth/2,Y=innerHeight*0.42;g.fillText(NAME[0],X,Y-fs*0.42);g.fillText(NAME[1],X,Y+fs*0.5);
+  const d=g.getImageData(0,0,innerWidth,innerHeight).data,st=innerWidth<720?6:4,pts=[];
+  for(let yy=0;yy<innerHeight;yy+=st)for(let xx=0;xx<innerWidth;xx+=st)if(d[(yy*innerWidth+xx)*4+3]>128)pts.push([xx,yy]);
+  const MAX=innerWidth<720?2800:5500,s=Math.max(1,Math.ceil(pts.length/MAX)),out=[];
+  for(let i=0;i<pts.length;i+=s)out.push(pts[i]);return out;
+}
+function build(){
+  W=cv.width=innerWidth*DPR;H=cv.height=innerHeight*DPR;cx=W/2;cy=H*0.42;
+  name=sampleName().map(([tx,ty])=>({tx:tx*DPR,ty:ty*DPR,x:Math.random()*W,y:Math.random()*H,vx:0,vy:0,ph:Math.random()*6,sp:.4+Math.random()*.7,c:tx/innerWidth}));
+  stars=Array.from({length:RM?60:140},()=>({x:Math.random()*W,y:Math.random()*H,r:(Math.random()*1.1+.3)*DPR,tw:Math.random()*6}));
+  const RO=Math.min(W,H)*0.34;
+  orbit=Array.from({length:RM?24:64},(_,i)=>({a:Math.random()*6.28,r:RO*(.8+Math.random()*.5),ry:.34,sp:.0016+Math.random()*.001,sz:(Math.random()*1.6+.6)*DPR}));
+  bok=Array.from({length:RM?6:15},()=>({x:Math.random()*W,y:Math.random()*H,r:(40+Math.random()*90)*DPR,ph:Math.random()*6,sp:.15+Math.random()*.25,ox:0,oy:0}));
+  bok.forEach(b=>{b.ox=b.x;b.oy=b.y;});
+}
+build();addEventListener("resize",build);
+function dot(px,py,r,col){x.fillStyle=col;x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+function frame(now){
+  const t=now/1000;p.x+=(p.tx-p.x)*.05;p.y+=(p.ty-p.y)*.05;
+  x.fillStyle="#06070a";x.fillRect(0,0,W,H);
+  // BACKGROUND stars (subtle parallax)
+  const bx=p.x*20*DPR,by=p.y*16*DPR;
+  x.globalCompositeOperation="lighter";
+  for(const s of stars){const a=.3+.4*Math.abs(Math.sin(t*.6+s.tw));dot(s.x+bx,s.y+by,s.r,`rgba(150,175,220,${a})`);}
+  // ORBIT behind (z<0) then front (z>0)
+  const ox=p.x*60*DPR,oy=p.y*46*DPR;
+  const back=[],front=[];
+  for(const o of orbit){o.a+=RM?0:o.sp;const z=Math.sin(o.a);
+    const px=cx+Math.cos(o.a)*o.r+ox,py=cy+Math.sin(o.a)*o.r*o.ry+oy;
+    const sc=.6+.4*(z*.5+.5);(z<0?back:front).push([px,py,o.sz*sc,z]);}
+  for(const[px,py,r] of back)dot(px,py,r,"rgba(120,160,220,0.5)");
+  // CORE name particles
+  const nx=p.x*30*DPR,ny=p.y*24*DPR,R=120*DPR,R2=R*R,amp=RM?0:1.6*DPR;
+  for(const q of name){
+    const hx=q.tx+Math.sin(t*q.sp+q.ph)*amp+nx,hy=q.ty+Math.cos(t*q.sp*.9+q.ph)*amp+ny;
+    let ax=(hx-q.x)*.022,ay=(hy-q.y)*.022;
+    if(p.on){const dx=q.x-p.mx,dy=q.y-p.my,d2=dx*dx+dy*dy;if(d2<R2){const d=Math.sqrt(d2)||1,f=(R-d)/R*6;ax+=dx/d*f;ay+=dy/d*f;}}
+    q.vx=(q.vx+ax)*.85;q.vy=(q.vy+ay)*.85;q.x+=q.vx;q.y+=q.vy;
+    const r=175+q.c*60|0;x.fillStyle=`rgba(${r},205,255,0.9)`;x.fillRect(q.x,q.y,1.7*DPR,1.7*DPR);
+  }
+  for(const[px,py,r] of front)dot(px,py,r,"rgba(180,210,255,0.75)");
+  // FOREGROUND bokeh (strong parallax)
+  const fx=-p.x*90*DPR,fy=-p.y*70*DPR;
+  for(const b of bok){const px=b.ox+Math.sin(t*b.sp+b.ph)*40*DPR+fx,py=b.oy+Math.cos(t*b.sp*.8+b.ph)*30*DPR+fy;
+    const g=x.createRadialGradient(px,py,0,px,py,b.r);g.addColorStop(0,"rgba(140,175,255,0.10)");g.addColorStop(1,"transparent");
+    x.fillStyle=g;x.beginPath();x.arc(px,py,b.r,0,7);x.fill();}
+  x.globalCompositeOperation="source-over";
+  if(!RM)requestAnimationFrame(frame);
+}
+if(RM){name.forEach(q=>{q.x=q.tx;q.y=q.ty;});frame(0);}else requestAnimationFrame(frame);
+</script>

@@ -1,0 +1,122 @@
+<title>Assemble Hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Familjen+Grotesk:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  :root{
+    --ink:#07080b;--fg:#eef0f4;--fg-dim:#9095a1;--fg-faint:#565b67;
+    --line:rgba(255,255,255,.12);
+    --body:"Familjen Grotesk",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+    --display:"Bricolage Grotesque",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--ink);color:var(--fg);font-family:var(--body);height:100svh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  #stage{position:fixed;inset:0;background:radial-gradient(130% 110% at 50% 32%,#0f131d,#07080b 70%)}
+  #c{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #vignette{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 90% at 50% 42%,transparent 55%,rgba(7,8,11,.6) 100%)}
+
+  .mark{position:fixed;top:26px;left:clamp(24px,6vw,64px);z-index:10;font-family:var(--mono);font-size:12px;
+    letter-spacing:.16em;color:var(--fg-dim)}
+  .mark span{color:var(--fg-faint)}
+  .nav{position:fixed;top:24px;right:clamp(24px,6vw,64px);z-index:10;display:flex;gap:26px;
+    font-family:var(--mono);font-size:12px;letter-spacing:.08em}
+  .nav a{color:var(--fg-dim);text-decoration:none;transition:color .2s}
+  .nav a:hover{color:var(--fg)}
+
+  .lower{position:fixed;left:0;right:0;top:63%;z-index:10;display:flex;flex-direction:column;align-items:center;
+    text-align:center;padding:0 24px;pointer-events:none}
+  .lower *{pointer-events:auto}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--fg-faint);margin:0 0 18px}
+  .tagline{font-size:clamp(1.05rem,2vw,1.4rem);line-height:1.45;color:var(--fg-dim);max-width:34ch;margin:0;font-weight:400}
+  .cta{display:flex;gap:14px;margin-top:30px;flex-wrap:wrap;justify-content:center}
+  .btn{font-size:15px;font-weight:500;padding:13px 26px;border-radius:100px;cursor:pointer;text-decoration:none;
+    border:1px solid var(--line);color:var(--fg);background:transparent;transition:background .25s,transform .25s}
+  .btn:hover{background:rgba(255,255,255,.07);transform:translateY(-1px)}
+  .btn.primary{background:var(--fg);color:#0a0b0e;border-color:var(--fg)}
+  .btn.primary:hover{background:#fff}
+
+  .scroll{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:10;font-family:var(--mono);
+    font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--fg-faint);display:flex;
+    flex-direction:column;align-items:center;gap:9px}
+  .scroll i{width:1px;height:26px;background:linear-gradient(var(--fg-faint),transparent);animation:drop 1.9s ease-in-out infinite}
+  @keyframes drop{0%{opacity:0;transform:scaleY(.3)}40%{opacity:1}100%{opacity:0;transform:translateY(10px) scaleY(1)}}
+  @media (max-width:720px){.nav{display:none}.lower{top:66%}}
+  @media (prefers-reduced-motion:reduce){.scroll i{animation:none}}
+</style>
+
+<div id="stage">
+  <canvas id="c"></canvas>
+  <div id="vignette"></div>
+</div>
+
+<div class="mark">MUHAMMAD&nbsp;AHMAD&nbsp;&nbsp;<span>/ Engineer</span></div>
+<nav class="nav"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+
+<div class="lower">
+  <p class="eyebrow">Engineer · Builder</p>
+  <p class="tagline">I design and ship interfaces, tools, and systems — with an eye for how they feel.</p>
+  <div class="cta"><a class="btn primary" href="#">View work</a><a class="btn" href="#">Get in touch</a></div>
+</div>
+
+<div class="scroll">Scroll<i></i></div>
+
+<script>
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DPR=Math.min(devicePixelRatio||1,REDUCED?1:2);
+const cv=document.getElementById("c"), ctx=cv.getContext("2d");
+const NAME=["MUHAMMAD","AHMAD"];
+const ptr={x:-999,y:-999,on:0};
+addEventListener("pointermove",e=>{ptr.x=e.clientX*DPR;ptr.y=e.clientY*DPR;ptr.on=1;});
+addEventListener("pointerleave",()=>ptr.on=0);
+
+let W,H,parts=[],t0=performance.now();
+function sample(){
+  const off=document.createElement("canvas"); off.width=innerWidth; off.height=innerHeight;
+  const g=off.getContext("2d"); g.fillStyle="#fff"; g.textAlign="center"; g.textBaseline="middle";
+  const fs=Math.min(innerWidth*0.155,innerHeight*0.26,200);
+  g.font=`800 ${fs}px "Bricolage Grotesque",sans-serif`;
+  const cx=innerWidth/2, cy=innerHeight*0.40;
+  g.fillText(NAME[0],cx,cy-fs*0.42); g.fillText(NAME[1],cx,cy+fs*0.5);
+  const d=g.getImageData(0,0,innerWidth,innerHeight).data, step=innerWidth<720?5:4, pts=[];
+  for(let y=0;y<innerHeight;y+=step)for(let x=0;x<innerWidth;x+=step)
+    if(d[(y*innerWidth+x)*4+3]>128) pts.push([x,y]);
+  const MAX=innerWidth<720?3000:6500; const stride=Math.max(1,Math.ceil(pts.length/MAX)), out=[];
+  for(let i=0;i<pts.length;i+=stride) out.push(pts[i]);
+  return out;
+}
+function build(){
+  W=cv.width=innerWidth*DPR; H=cv.height=innerHeight*DPR;
+  const pts=sample();
+  parts=pts.map(([px,py])=>({
+    tx:px*DPR,ty:py*DPR,
+    x:(Math.random()*innerWidth)*DPR, y:(Math.random()*innerHeight)*DPR,
+    vx:0,vy:0, ph:Math.random()*6.28, sp:0.4+Math.random()*0.8,
+    a:0.5+Math.random()*0.5, c:px/innerWidth
+  }));
+}
+build(); addEventListener("resize",build);
+
+function frame(now){
+  const t=(now-t0)/1000;
+  ctx.fillStyle="#07080b"; ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation="lighter";
+  const R=120*DPR, R2=R*R, amp=REDUCED?0:1.6*DPR;
+  for(const p of parts){
+    const hx=p.tx+Math.sin(t*p.sp+p.ph)*amp, hy=p.ty+Math.cos(t*p.sp*0.9+p.ph)*amp;
+    let ax=(hx-p.x)*0.022, ay=(hy-p.y)*0.022;
+    if(ptr.on){ const dx=p.x-ptr.x,dy=p.y-ptr.y,d2=dx*dx+dy*dy;
+      if(d2<R2){ const d=Math.sqrt(d2)||1,f=(R-d)/R*6; ax+=dx/d*f; ay+=dy/d*f; } }
+    p.vx=(p.vx+ax)*0.85; p.vy=(p.vy+ay)*0.85; p.x+=p.vx; p.y+=p.vy;
+    const r=175+p.c*60|0, gg=200+p.c*30|0, b=255;
+    ctx.fillStyle=`rgba(${r},${gg},${b},${p.a})`;
+    ctx.fillRect(p.x,p.y,1.7*DPR,1.7*DPR);
+  }
+  ctx.globalCompositeOperation="source-over";
+  if(!REDUCED) requestAnimationFrame(frame);
+}
+if(REDUCED){ parts.forEach(p=>{p.x=p.tx;p.y=p.ty;}); frame(performance.now()); }
+else requestAnimationFrame(frame);
+</script>
