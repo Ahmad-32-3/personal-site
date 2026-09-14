@@ -73,8 +73,10 @@ export function startParticleHero(
     g.textAlign = "center"
     g.textBaseline = "middle"
     const two = lines.length > 1
+    // The two-line name is the width-bound worst case on phones; bump its size
+    // there so strokes are thick enough to resolve. Desktop keeps 0.135.
     const fs = Math.min(
-      innerWidth * (two ? 0.135 : 0.19),
+      innerWidth * (two ? (MOBILE ? 0.16 : 0.135) : 0.19),
       innerHeight * 0.24,
       two ? 180 : 240
     )
@@ -86,7 +88,7 @@ export function startParticleHero(
       g.fillText(ln, X, Y + (i - (n - 1) / 2) * fs * 0.9)
     )
     const d = g.getImageData(0, 0, innerWidth, innerHeight).data
-    const st = innerWidth < 720 ? 6 : 4
+    const st = MOBILE ? 4 : innerWidth < 720 ? 6 : 4
     const pts: number[][] = []
     for (let yy = 0; yy < innerHeight; yy += st) {
       for (let xx = 0; xx < innerWidth; xx += st) {
@@ -94,7 +96,7 @@ export function startParticleHero(
           pts.push([xx * DPR, yy * DPR])
       }
     }
-    const MAX = MOBILE ? 1200 : innerWidth < 720 ? 2600 : 5000
+    const MAX = MOBILE ? 2200 : innerWidth < 720 ? 2600 : 5000
     const s = Math.max(1, Math.ceil(pts.length / MAX))
     const out: number[][] = []
     for (let i = 0; i < pts.length; i += s) out.push(pts[i])
@@ -166,7 +168,7 @@ export function startParticleHero(
     const ny = p.y * 24 * DPR
     const R = 72 * DPR
     const R2 = R * R
-    const amp = RM ? 0 : 1.6 * DPR
+    const amp = RM ? 0 : (MOBILE ? 0.9 : 1.6) * DPR
     if (!RM) {
       for (const o of orbit) o.a += o.sp
     }
@@ -227,7 +229,7 @@ export function startParticleHero(
       ;(z < 0 ? back : front).push([px, py, o.sz * sc])
     }
     for (const [px, py, r] of back) dot(px, py, r, "rgba(120,160,220,0.5)")
-    const sz = 1.7 * DPR
+    const sz = (MOBILE ? 2.6 : 1.7) * DPR
     for (const q of core) {
       ctx.fillStyle = PARTICLE_FILL[Math.max(0, Math.min(60, (q.c * 60) | 0))]
       ctx.fillRect(q.x, q.y, sz, sz)
