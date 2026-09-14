@@ -18,12 +18,12 @@ export function setWalkOverlayOpen(open: boolean) {
 function setScrolling(next: boolean) {
   if (scrolling === next) return
   scrolling = next
+  // Only used by a CSS keycard effect now; canvases keep animating during scroll.
   document.documentElement.classList.toggle("is-scrolling", next)
-  emit()
 }
 
 export function canvasesMayRun() {
-  return !overlayOpen && !scrolling && document.visibilityState === "visible"
+  return !overlayOpen && document.visibilityState === "visible"
 }
 
 export function watchCanvasPause(fn: Listener): () => void {

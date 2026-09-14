@@ -94,7 +94,7 @@ export function startParticleHero(
           pts.push([xx * DPR, yy * DPR])
       }
     }
-    const MAX = innerWidth < 720 ? 2600 : 5000
+    const MAX = MOBILE ? 1200 : innerWidth < 720 ? 2600 : 5000
     const s = Math.max(1, Math.ceil(pts.length / MAX))
     const out: number[][] = []
     for (let i = 0; i < pts.length; i += s) out.push(pts[i])
@@ -112,6 +112,7 @@ export function startParticleHero(
   }
 
   function build() {
+    if (innerWidth < 2 || innerHeight < 2) return // hidden/zero-size; retry on next real resize
     builtW = innerWidth
     W = canvas.width = innerWidth * DPR
     H = canvas.height = innerHeight * DPR
@@ -135,14 +136,14 @@ export function startParticleHero(
     })
     idx = 0
     timer = performance.now()
-    stars = Array.from({ length: RM ? 60 : 150 }, () => ({
+    stars = Array.from({ length: RM ? 60 : MOBILE ? 70 : 150 }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
       r: (Math.random() * 1.1 + 0.3) * DPR,
       tw: Math.random() * 6,
     }))
     const RO = Math.min(W, H) * 0.4
-    orbit = Array.from({ length: RM ? 26 : 70 }, () => ({
+    orbit = Array.from({ length: RM ? 26 : MOBILE ? 30 : 70 }, () => ({
       a: Math.random() * 6.28,
       r: RO * (0.78 + Math.random() * 0.55),
       ry: 0.36,
@@ -248,6 +249,9 @@ export function startParticleHero(
   }
 
   const onMove = (e: PointerEvent) => {
+    // A touch has no "leave", so it would pin the cursor-repel on and freeze the
+    // effect. Only a real mouse drives the interaction.
+    if (e.pointerType === "touch") return
     p.tx = e.clientX / innerWidth - 0.5
     p.ty = e.clientY / innerHeight - 0.5
     p.mx = e.clientX * DPR
