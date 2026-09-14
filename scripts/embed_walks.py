@@ -14,10 +14,10 @@ PUBLIC = SITE / "public" / "work"
 
 # theme: (bg, accent, bright, deep, wash) — only applied to generic navy clones
 DARK = {
-    "sentionet": ("#0e1118", "#8b9bff", "#c4cbff", "#6a78e0", "#1c2240"),
+    "neuroflag": ("#0e1118", "#8b9bff", "#c4cbff", "#6a78e0", "#1c2240"),
     "turnwise": ("#15110e", "#d4894a", "#e8b07a", "#b36b32", "#3a2818"),
     "formulafind": ("#10141a", "#5ec2a4", "#8fdcc4", "#3d9a80", "#16332c"),
-    "marketdigest": ("#0f1410", "#3fbe8c", "#74d4ad", "#2d8f68", "#12291f"),
+    "stormgauge": ("#0f1410", "#3fbe8c", "#74d4ad", "#2d8f68", "#12291f"),
     "marketmood": ("#15100e", "#d9a94a", "#edc878", "#b8882e", "#332a18"),
     "livehedge": ("#0e1412", "#5aa88a", "#8bc4ae", "#3d7d66", "#143028"),
     "quotebook": ("#0e1410", "#4caf7a", "#7dcca0", "#35855a", "#163024"),
@@ -28,7 +28,7 @@ DARK = {
 }
 
 WALKS = [
-    {"web": r"C:\dev\chb-mit-eeg\web", "slug": "sentionet", "old": "ictal-risk forecast", "new": "SentioNet", "h1": False},
+    {"web": r"C:\dev\chb-mit-eeg\web", "slug": "neuroflag", "old": "ictal-risk forecast", "new": "NeuroFlag", "h1": False},
     {"web": r"C:\dev\buildings\web", "slug": "wattahead", "old": "buildings", "new": "WattAhead", "h1": True},
     {"web": r"C:\dev\sensors\web", "slug": "airtrue", "old": "sensors", "new": "AirTrue", "h1": True},
     {"web": r"C:\dev\leaks\web", "slug": "dighere", "old": "leaks", "new": "DigHere", "h1": True},
@@ -37,7 +37,7 @@ WALKS = [
     {"web": r"C:\dev\data-science-projects\equivariant\web", "slug": "turnwise", "old": "equivariant", "new": "TurnWise", "h1": True},
     {"web": r"C:\dev\data-science-projects\kan-laws\web", "slug": "formulafind", "old": "kan-laws", "new": "FormulaFind", "h1": True},
     {"web": r"C:\dev\data-science-projects\transport\web", "slug": "driftalign", "old": "transport", "new": "DriftAlign", "h1": True},
-    {"web": r"C:\dev\quant-projects\vol-cluster\web", "slug": "marketdigest", "old": "vol-cluster", "new": "MarketDigest", "h1": True},
+    {"web": r"C:\dev\quant-projects\vol-cluster\web", "slug": "stormgauge", "old": "vol-cluster", "new": "StormGauge", "h1": True},
     {"web": r"C:\dev\quant-projects\regimes\web", "slug": "marketmood", "old": "regimes", "new": "MarketMood", "h1": True},
     {"web": r"C:\dev\quant-projects\kalman-spread\web", "slug": "livehedge", "old": "kalman-spread", "new": "LiveHedge", "h1": True},
     {"web": r"C:\dev\data-science-projects\circuits\web", "slug": "copypath", "old": "circuits", "new": "CopyPath", "h1": True},

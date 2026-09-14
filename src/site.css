@@ -221,6 +221,13 @@ body,
   white-space: nowrap;
 }
 
+/* No hover on touch screens, so the hint has nothing to point at. */
+@media (max-width: 768px), (pointer: coarse) {
+  .hint {
+    display: none;
+  }
+}
+
 .about {
   position: relative;
   z-index: 2;

@@ -32,7 +32,10 @@ export function startParticleHero(
   hero: HTMLElement
 ): () => void {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches
-  const DPR = Math.min(devicePixelRatio || 1, RM ? 1 : 1.5)
+  // Phones report a coarse pointer / narrow width. Cap DPR to 1 there so the
+  // per-frame fill cost stays sane on mobile GPUs. Desktop is unchanged.
+  const MOBILE = matchMedia("(max-width: 768px), (pointer: coarse)").matches
+  const DPR = MOBILE ? 1 : Math.min(devicePixelRatio || 1, RM ? 1 : 1.5)
   const context = canvas.getContext("2d", {
     alpha: false,
     desynchronized: true,
@@ -54,6 +57,8 @@ export function startParticleHero(
   let orbit: { a: number; r: number; ry: number; sp: number; sz: number }[] = []
   let onScreen = true
   let raf = 0
+  let builtW = 0
+  let resizeTimer = 0
   let cancelled = false
   const back: number[][] = []
   const front: number[][] = []
@@ -77,7 +82,9 @@ export function startParticleHero(
     const X = innerWidth / 2
     const Y = innerHeight * 0.42
     const n = lines.length
-    lines.forEach((ln, i) => g.fillText(ln, X, Y + (i - (n - 1) / 2) * fs * 0.9))
+    lines.forEach((ln, i) =>
+      g.fillText(ln, X, Y + (i - (n - 1) / 2) * fs * 0.9)
+    )
     const d = g.getImageData(0, 0, innerWidth, innerHeight).data
     const st = innerWidth < 720 ? 6 : 4
     const pts: number[][] = []
@@ -105,6 +112,7 @@ export function startParticleHero(
   }
 
   function build() {
+    builtW = innerWidth
     W = canvas.width = innerWidth * DPR
     H = canvas.height = innerHeight * DPR
     cx = W / 2
@@ -249,7 +257,17 @@ export function startParticleHero(
   const onLeave = () => {
     p.on = 0
   }
-  const onResize = () => build()
+  // Only a real width change (rotation, desktop resize) rebuilds. Mobile fires
+  // resize on every scroll as the address bar shows/hides, changing height only;
+  // rebuilding there ran six full-screen getImageData passes mid-scroll and froze
+  // the page. Ignore height-only resizes, and debounce the rest.
+  const onResize = () => {
+    if (innerWidth === builtW) return
+    window.clearTimeout(resizeTimer)
+    resizeTimer = window.setTimeout(() => {
+      if (!cancelled) build()
+    }, 200)
+  }
 
   addEventListener("pointermove", onMove)
   addEventListener("pointerleave", onLeave)
@@ -296,6 +314,7 @@ export function startParticleHero(
     cancelled = true
     onScreen = false
     cancelAnimationFrame(raf)
+    window.clearTimeout(resizeTimer)
     unwatchPause()
     io.disconnect()
     removeEventListener("pointermove", onMove)

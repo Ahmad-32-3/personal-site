@@ -6,6 +6,10 @@ export function startAmbientStars(
   canvas: HTMLCanvasElement
 ): () => void {
   const RM = matchMedia("(prefers-reduced-motion: reduce)").matches
+  // On phones, skip these three background canvases entirely. The hero already
+  // carries the motion, and cutting them keeps the main thread free on scroll.
+  if (matchMedia("(max-width: 768px), (pointer: coarse)").matches)
+    return () => {}
   const context = canvas.getContext("2d")
   if (!context) return () => {}
   const g: CanvasRenderingContext2D = context
@@ -28,7 +32,9 @@ export function startAmbientStars(
     W = canvas.width = Math.max(2, section.offsetWidth * D)
     H = canvas.height = Math.max(2, section.offsetHeight * D)
     const n = Math.min(
-      RM ? 40 : Math.round((section.offsetWidth * section.offsetHeight) / 24000),
+      RM
+        ? 40
+        : Math.round((section.offsetWidth * section.offsetHeight) / 24000),
       160
     )
     st = Array.from({ length: n }, () => ({
@@ -80,7 +86,10 @@ export function startAmbientStars(
 
   size()
   draw(0)
+  let builtW = section.offsetWidth
   const onResize = () => {
+    if (section.offsetWidth === builtW) return
+    builtW = section.offsetWidth
     size()
     if (!mayAnimate() || RM) draw(0)
   }
