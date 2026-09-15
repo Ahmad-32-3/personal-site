@@ -186,7 +186,7 @@
   <div class="wrap">
     <span class="eyebrow">Case study · a caching layer for LLM APIs</span>
     <h1>Two questions that mean opposite things can look 98.4% identical to a machine.</h1>
-    <p class="hero-sub">I built a caching layer that sits in front of an LLM and tries to answer one question honestly: when is it actually safe to reuse an old answer for a question someone asked a slightly different way? Reusing answers saves money, but reuse the wrong one and a user gets a confident answer to a question they never asked. This walkthrough follows what I tried, where it broke, and the fix that helped without fully solving it. Every number here comes from a script in the repo, including the security bug a fresh review caught before I called it done.</p>
+    <p class="hero-sub">I built a caching layer that sits in front of an LLM and tries to answer one question: when is it safe to reuse an old answer for a question someone asked a slightly different way? Reusing answers saves money, but reuse the wrong one and a user gets a confident answer to a question they never asked. This walkthrough follows what I tried, where it broke, and the fix that helped without fully solving it. Every number here comes from a script in the repo, including the security bug a fresh review caught before I called it done.</p>
 
     <div class="hero-evidence">
       <div class="q"><span>Prompt A</span>“What's the refund policy for <em>monthly</em> plans?”</div>
@@ -252,7 +252,7 @@
     </div>
   </div>
   <div class="wrap prose">
-    <p>That result is easy to undersell. Real support traffic is lopsided: a few questions get asked far more than all the others, and a lot of them arrive as the exact same text (a “Cancel subscription” button, a canned FAQ link). Exact-matching catches almost all of the savings, and it physically cannot serve the wrong answer. Most of the win, none of the risk. That's the bar the next two sections have to beat.</p>
+    <p>That result is easy to undersell. Real support traffic is lopsided: a few questions get asked far more than all the others, and a lot of them arrive as the exact same text (a “Cancel subscription” button, a canned FAQ link). Exact-matching catches almost all of the savings, and it physically can't serve the wrong answer. That's most of the win with none of the risk, and it's the bar the next two sections have to beat.</p>
   </div>
 </section>
 
@@ -310,7 +310,7 @@
   <div class="wrap prose">
     <div class="kicker"><span class="idx">04</span><h2>Try 3: add a guard</h2><span class="tag">the fix, and its limits</span></div>
     <p>The wrong matches share a pattern. Every one above shares nearly all its words with its partner and differs in exactly the part that flips the answer: a number, a currency, a role, monthly versus annual, upgrade versus downgrade, a “not.” Catching that takes no understanding of meaning at all. It takes reading the sentence for the few words that change everything.</p>
-    <p>So I added a guard that runs after the meaning check, not instead of it. If two questions clear the match line but disagree on a number, or sit on opposite sides of a short list of watched groups (billing period, role, direction, currency, contact channel, time reference), or one says “not” where the other doesn't, the guard blocks the reuse and falls through to the next-best answer, or to an honest miss.</p>
+    <p>So I added a guard that runs after the meaning check, not instead of it. If two questions clear the match line but disagree on a number, or sit on opposite sides of a short list of watched groups (billing period, role, direction, currency, contact channel, time reference), or one says “not” where the other doesn't, the guard blocks the reuse and falls through to the next-best answer, or to an outright miss.</p>
   </div>
   <div class="wrap panel">
     <div class="stat-row two">
