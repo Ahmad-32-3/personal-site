@@ -32,7 +32,8 @@ export const PROJECT_TIERS: ProjectTier[] = [
         tone: "neural",
         github: `${GH}/SentioNet-EEG`,
         d: "Overnight EEG from children with epilepsy: flag a seizure while it is on the tracing, on a patient the model never saw. Trained on real CHB-MIT recordings, scored leave-one-patient-out.",
-        claim: "Flag a child's seizure on the tracing, on a patient the model never saw.",
+        claim:
+          "Flag a child's seizure on the tracing, on a patient the model never saw.",
         method:
           "Leave-one-patient-out EEGNet on real CHB-MIT scalp EEG. Scored as catch rate, false pages per hour, and delay after onset. At one false page an hour, the pager catches 24 of 26 seizures.",
         feat: 1,
@@ -130,16 +131,6 @@ export const PROJECT_TIERS: ProjectTier[] = [
     id: "ds",
     label: "Data Science",
     items: [
-      {
-        t: "Cost Autopilot",
-        tag: "LLM routing · FastAPI",
-        art: "route",
-        feat: 1,
-        walk: "/work/cost-autopilot/",
-        tone: "gold",
-        github: `${GH}/Cost-Autopilot`,
-        d: "A routing proxy that sends easy chatbot questions to a cheap model and repeats to a cache, so you stop paying for the most expensive model on work it does not need. You can try the routing on the page.",
-      },
       {
         t: "TurnWise",
         tag: "Deep learning",
@@ -264,6 +255,15 @@ export const PROJECT_TIERS: ProjectTier[] = [
     id: "more",
     label: "More Projects",
     items: [
+      {
+        t: "Cost Autopilot",
+        tag: "LLM routing · FastAPI",
+        art: "route",
+        walk: "/work/cost-autopilot/",
+        tone: "gold",
+        github: `${GH}/Cost-Autopilot`,
+        d: "A routing proxy that sends easy chatbot questions to a cheap model and repeats to a cache, so you stop paying for the most expensive model on work it does not need. You can try the routing on the page.",
+      },
       {
         t: "EchoAsk",
         tag: "LLM infra · Python",
