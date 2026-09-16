@@ -107,15 +107,6 @@ export const PROJECT_TIERS: ProjectTier[] = [
         github: `${GH}/Machine-Debugger`,
         d: "Fault detection from machine audio, tested on a machine left out of training.",
       },
-      {
-        t: "AQ-Tracker",
-        tag: "Air quality · live",
-        art: "smog",
-        walk: "/work/aq-tracker/",
-        tone: "ocean",
-        github: `${GH}/AQ-Tracker`,
-        d: "Tracks live air quality and heat for Lahore, Karachi, and Islamabad, then gives plain guidance on what is safe to do outside today. Pulls real readings from Open-Meteo in the browser, no key.",
-      },
     ],
   },
   {
@@ -245,6 +236,15 @@ export const PROJECT_TIERS: ProjectTier[] = [
         tone: "neural",
         github: `${GH}/SentioNet-EEG`,
         d: "Overnight EEG from children with epilepsy: flag a seizure while it is on the tracing, on a patient the model never saw. Trained on real CHB-MIT recordings, scored leave-one-patient-out.",
+      },
+      {
+        t: "AQ-Tracker",
+        tag: "Air quality · live",
+        art: "smog",
+        walk: "/work/aq-tracker/",
+        tone: "ocean",
+        github: `${GH}/AQ-Tracker`,
+        d: "Tracks live air quality and heat for Lahore, Karachi, and Islamabad, then gives plain guidance on what is safe to do outside today. Pulls real readings from Open-Meteo in the browser, no key.",
       },
       {
         t: "GrepOrEmbed",
