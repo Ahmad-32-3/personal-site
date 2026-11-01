@@ -14,16 +14,21 @@ const WORK_TYPES: Record<string, string> = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".ttf": "font/ttf",
   ".woff2": "font/woff2",
   ".map": "application/json",
 }
+
+const STATIC_PREFIXES = ["/work/", "/ocr-walkthrough/", "/ocr-demo/"]
 
 function workIndexes(): Plugin {
   const serve = (root: string) => {
     return (req: IncomingMessage, res: ServerResponse, next: () => void) => {
       const url = decodeURIComponent((req.url ?? "").split("?")[0])
-      if (!url.startsWith("/work/")) return next()
-      const bound = path.join(root, "public", "work")
+      const prefix = STATIC_PREFIXES.find((p) => url === p.slice(0, -1) || url.startsWith(p))
+      if (!prefix) return next()
+      const bound = path.join(root, "public", prefix.replace(/^\/+|\/$/g, "").split("/")[0])
       let file = path.join(root, "public", url.replace(/^\/+/, ""))
       if (url.endsWith("/") || (fs.existsSync(file) && fs.statSync(file).isDirectory())) {
         file = path.join(file, "index.html")

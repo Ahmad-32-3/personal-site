@@ -211,6 +211,14 @@ export const PROJECT_TIERS: ProjectTier[] = [
     label: "More Projects",
     items: [
       {
+        t: "InkToText",
+        tag: "OCR · Python",
+        art: "ink",
+        walk: "/ocr-walkthrough/",
+        tone: "khojki",
+        d: "Pages of 1896 printed Khojki in, Unicode text out. Each glyph is marked sure, unsure, or no idea, and you can run the real pipeline on a page in the demo.",
+      },
+      {
         t: "Cost Autopilot",
         tag: "LLM routing · FastAPI",
         art: "route",

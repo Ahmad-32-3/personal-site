@@ -4,5 +4,17 @@
       "source": "/work/inboxsweep/redirect.html",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/ocr-walkthrough",
+      "destination": "/ocr-walkthrough/",
+      "permanent": true
+    },
+    {
+      "source": "/ocr-demo",
+      "destination": "/ocr-demo/",
+      "permanent": true
+    }
   ]
 }

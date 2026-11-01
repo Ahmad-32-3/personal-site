@@ -556,6 +556,20 @@ const ARTS: Record<string, () => React.ReactNode> = {
       />
     </>
   ),
+  ink: () => (
+    <>
+      <Stroke d="M28 58 C40 20 56 18 68 42 C78 60 92 62 104 38 C112 22 126 18 140 44" />
+      <Stroke
+        d="M152 56 C164 24 180 18 192 40 C204 62 218 60 232 36 C242 20 256 22 272 48"
+        delay={0.1}
+      />
+      <Stroke d="M20 68 H300" className="sil-stroke" delay={0.18} />
+      <Fade delay={0.2}>
+        <circle cx="68" cy="42" r="2.5" className="lit" />
+        <circle cx="192" cy="40" r="2.5" className="hot" />
+      </Fade>
+    </>
+  ),
 }
 
 export function CardArt({ kind }: CardArtProps) {
