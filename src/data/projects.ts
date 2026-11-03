@@ -25,6 +25,19 @@ export const PROJECT_TIERS: ProjectTier[] = [
     label: "Featured",
     items: [
       {
+        t: "InkToText",
+        tag: "OCR · Python",
+        art: "ink",
+        walk: "/ocr-walkthrough/",
+        tone: "khojki",
+        github: `${GH}/khojki-ocr`,
+        d: "I built a pipeline that reads pages from an 1896 Khojki book and writes Unicode text. Each glyph is marked sure, unsure, or unknown, and the live demo runs the same code on a sample page.",
+        claim: "Read 1896 printed Khojki pages into Unicode text.",
+        method:
+          "Find the lines, cut each glyph, match it to labelled examples. Sure readings go into the text. Unsure ones keep the best guess plus runners-up. Weak matches stay unknown. Try a sample page in the demo.",
+        feat: 1,
+      },
+      {
         t: "AirTrue",
         tag: "Sensors",
         art: "sensor",
@@ -36,19 +49,6 @@ export const PROJECT_TIERS: ProjectTier[] = [
           "Correct cheap backyard air sensors at a monitor the model never saw.",
         method:
           "PurpleAir sensors next to EPA monitors. I fit a correction, then score leave-one-site-out MAE, bias, and Pearson r. Same-site checks are only for debugging.",
-        feat: 1,
-      },
-      {
-        t: "Porter",
-        tag: "Reverse proxy · Go",
-        art: "crowd",
-        walk: "/work/porter/",
-        tone: "crowd",
-        github: `${GH}/Porter`,
-        d: "When a crowd opens one page at once, the site behind it falls over. Porter is a small Go reverse proxy that puts a waiting line on just the crowded page and lets every other page through untouched. Try the crowd on the page.",
-        claim: "Keep the rest of the site up when one page gets mobbed.",
-        method:
-          "A Go reverse proxy: per-path rules cap how many run at once and add a waiting room on the hot page, request-collapsing shares one fetch for identical files, and Redis leases free stuck slots. The page runs a browser simulation of the rules.",
         feat: 1,
       },
       {
@@ -69,6 +69,18 @@ export const PROJECT_TIERS: ProjectTier[] = [
     id: "db",
     label: "Real-World Datasets",
     items: [
+      {
+        t: "Porter",
+        tag: "Reverse proxy · Go",
+        art: "crowd",
+        walk: "/work/porter/",
+        tone: "crowd",
+        github: `${GH}/Porter`,
+        d: "When a crowd opens one page at once, the site behind it falls over. Porter is a small Go reverse proxy that puts a waiting line on just the crowded page and lets every other page through untouched. Try the crowd on the page.",
+        claim: "Keep the rest of the site up when one page gets mobbed.",
+        method:
+          "A Go reverse proxy: per-path rules cap how many run at once and add a waiting room on the hot page, request-collapsing shares one fetch for identical files, and Redis leases free stuck slots. The page runs a browser simulation of the rules.",
+      },
       {
         t: "WattAhead",
         tag: "Time series",
@@ -210,14 +222,6 @@ export const PROJECT_TIERS: ProjectTier[] = [
     id: "more",
     label: "More Projects",
     items: [
-      {
-        t: "InkToText",
-        tag: "OCR · Python",
-        art: "ink",
-        walk: "/ocr-walkthrough/",
-        tone: "khojki",
-        d: "Pages of 1896 printed Khojki in, Unicode text out. Each glyph is marked sure, unsure, or no idea, and you can run the real pipeline on a page in the demo.",
-      },
       {
         t: "Cost Autopilot",
         tag: "LLM routing · FastAPI",

@@ -193,9 +193,9 @@ export const TONES: Record<string, WalkTone> = {
     fg: "#8fb89a",
   },
   khojki: {
-    bg: "#170b0d",
-    back: "rgba(32, 18, 20, 0.94)",
-    line: "#3a2820",
-    fg: "#cba461",
+    bg: "#1a0e10",
+    back: "rgba(42, 22, 24, 0.94)",
+    line: "#4a3228",
+    fg: "#d4b06a",
   },
 }

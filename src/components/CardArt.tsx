@@ -556,20 +556,106 @@ const ARTS: Record<string, () => React.ReactNode> = {
       />
     </>
   ),
-  ink: () => (
+  ink: () => <InkArt />,
+}
+
+function InkArt() {
+  const reduce = useReducedMotion()
+  useMotionBoost()
+  const marks = [
+    "M28 24 c4 -8 10 -8 14 0 c3 6 8 6 12 -1",
+    "M58 26 c5 -10 12 -8 14 2 c2 7 7 5 11 -2",
+    "M88 23 c3 -6 9 -7 13 1 c4 7 9 5 13 -2",
+    "M118 25 c4 -9 11 -7 13 2 c3 6 8 6 12 -1",
+    "M148 24 c5 -8 10 -9 14 0 c3 7 9 5 12 -2",
+    "M178 26 c4 -9 11 -6 13 1 c2 6 8 7 12 -1",
+    "M208 23 c5 -7 10 -8 14 1 c3 6 8 6 11 -2",
+    "M238 25 c4 -9 12 -7 13 2 c2 6 7 5 12 -1",
+    "M268 24 c5 -8 10 -8 13 0 c3 7 8 5 12 -2",
+    "M30 42 c5 -8 11 -7 14 1 c3 6 8 5 12 -2",
+    "M60 44 c4 -9 10 -8 13 0 c3 7 9 6 12 -1",
+    "M90 41 c5 -7 11 -8 14 2 c2 6 8 5 11 -2",
+    "M120 43 c4 -9 12 -6 13 1 c3 6 8 7 12 -1",
+    "M150 42 c5 -8 10 -9 14 0 c3 7 9 5 12 -2",
+    "M180 44 c4 -9 11 -7 13 2 c2 6 8 6 12 -1",
+    "M210 41 c5 -7 10 -8 14 1 c3 6 8 5 11 -2",
+    "M240 43 c4 -9 12 -7 13 0 c3 7 8 6 12 -1",
+    "M270 42 c5 -8 10 -8 13 2 c2 6 8 5 12 -2",
+    "M28 60 c4 -8 10 -7 14 0 c3 6 8 6 12 -1",
+    "M58 62 c5 -9 12 -8 14 1 c2 7 7 5 11 -2",
+    "M88 59 c3 -6 9 -8 13 2 c4 6 9 5 13 -1",
+    "M118 61 c4 -9 11 -7 13 0 c3 7 8 6 12 -2",
+    "M148 60 c5 -8 10 -9 14 1 c3 6 9 5 12 -1",
+    "M178 62 c4 -9 11 -6 13 2 c2 6 8 7 12 -1",
+    "M208 59 c5 -7 10 -8 14 0 c3 7 8 5 11 -2",
+    "M238 61 c4 -9 12 -7 13 1 c2 6 7 6 12 -1",
+    "M268 60 c5 -8 10 -8 13 2 c3 6 8 5 12 -2",
+  ]
+  const boxes = [
+    [54, 14, 22, 18, "lit"],
+    [114, 14, 24, 18, "hot"],
+    [204, 14, 22, 18, "lit"],
+    [56, 32, 24, 18, "hot"],
+    [146, 32, 26, 18, "lit"],
+    [236, 32, 22, 18, "hot"],
+    [84, 50, 24, 18, "lit"],
+    [174, 50, 24, 18, "hot"],
+    [264, 50, 22, 18, "lit"],
+  ] as const
+
+  return (
     <>
-      <Stroke d="M28 58 C40 20 56 18 68 42 C78 60 92 62 104 38 C112 22 126 18 140 44" />
-      <Stroke
-        d="M152 56 C164 24 180 18 192 40 C204 62 218 60 232 36 C242 20 256 22 272 48"
-        delay={0.1}
-      />
-      <Stroke d="M20 68 H300" className="sil-stroke" delay={0.18} />
-      <Fade delay={0.2}>
-        <circle cx="68" cy="42" r="2.5" className="lit" />
-        <circle cx="192" cy="40" r="2.5" className="hot" />
+      <Fade>
+        <rect x="14" y="8" width="292" height="64" rx="3" className="sil" />
+        <rect x="20" y="12" width="280" height="56" rx="2" className="page" />
       </Fade>
+      {marks.map((d, i) => (
+        <Stroke
+          key={d}
+          d={d}
+          className={i % 5 === 0 ? "lit-stroke" : "line"}
+          delay={0.04 + i * 0.02}
+        />
+      ))}
+      {boxes.map(([x, y, w, h, cls], i) => (
+        <Fade key={`b-${i}`} delay={0.32 + i * 0.05}>
+          <rect
+            x={x}
+            y={y}
+            width={w}
+            height={h}
+            rx="1"
+            fill="none"
+            className={cls === "hot" ? "box-hot" : "box-lit"}
+          />
+        </Fade>
+      ))}
+      <Stroke d="M24 32 H296" className="sil-stroke" delay={0.12} />
+      <Stroke d="M24 50 H296" className="sil-stroke" delay={0.18} />
+      <Stroke d="M24 68 H296" className="sil-stroke" delay={0.24} />
+      <motion.g
+        initial={{ x: reduce ? 140 : 0, opacity: reduce ? 0.4 : 0 }}
+        whileInView={
+          reduce
+            ? { opacity: 0.4 }
+            : { x: [0, 282, 0], opacity: [0, 0.85, 0.85, 0] }
+        }
+        viewport={{ once: false, amount: 0.35 }}
+        transition={
+          reduce
+            ? { duration: 0 }
+            : {
+                duration: scaledDuration(4.2),
+                ease: "linear",
+                repeat: Infinity,
+                times: [0, 0.45, 0.9, 1],
+              }
+        }
+      >
+        <rect x="14" y="8" width="12" height="64" className="scan" />
+      </motion.g>
     </>
-  ),
+  )
 }
 
 export function CardArt({ kind }: CardArtProps) {
